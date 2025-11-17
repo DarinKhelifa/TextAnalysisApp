@@ -35,10 +35,10 @@ public class HelloApplication extends Application {
 
         Scene scene = new Scene(layout, 600, 400);
 
-        FileChooser fileChooser = new FileChooser();
+        FileChooser fileChooser = new FileChooser();// access to fileExplorer
 
-        loadBtn.setOnAction(e -> {
-            List<File> files = fileChooser.showOpenMultipleDialog(primaryStage);
+        loadBtn.setOnAction(e -> {// == loadBtn.Onclick()= ()=> {}
+            List<File> files = fileChooser.showOpenMultipleDialog(primaryStage);// allow the user to choose multiple files
 
             if (files != null) {
                 for (File file : files) {
