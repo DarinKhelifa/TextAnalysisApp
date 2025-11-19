@@ -1,8 +1,7 @@
 module com.example.textanalysisapp {
     requires javafx.controls;
     requires javafx.fxml;
-
-    requires com.dlsc.formsfx;
+    requires javafx.graphics; // Add this if needed
 
     opens com.example.textanalysisapp to javafx.fxml;
     exports com.example.textanalysisapp;

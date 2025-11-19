@@ -1,0 +1,248 @@
+/* Root and main layout styles */
+.root {
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+    -fx-background-color: #f8f9fa;
+}
+
+.main-layout {
+    -fx-background-color: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+}
+
+/* Header Styles */
+.header {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.app-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.app-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-style: italic;
+}
+
+.logo {
+    -fx-background-color: linear-gradient(to right, #667eea, #764ba2);
+    -fx-background-radius: 15;
+    -fx-min-width: 50px;
+    -fx-min-height: 50px;
+    -fx-pref-width: 50px;
+    -fx-pref-height: 50px;
+}
+
+.logo-text {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+/* Center Content Styles */
+.center-content {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 20, 0, 0, 5);
+    -fx-margin: 20;
+}
+
+/* Section Styles */
+.section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.section-subtitle {
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #34495e;
+}
+
+/* Button Styles */
+.btn {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 12 24;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);
+    -fx-transition: all 0.3s;
+}
+
+.btn:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+
+.btn-primary {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #2980b9;
+}
+
+.btn-secondary {
+    -fx-background-color: #95a5a6;
+    -fx-text-fill: white;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #7f8c8d;
+}
+
+.btn-success {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+}
+
+.btn-success:hover {
+    -fx-background-color: #229954;
+}
+
+.btn-danger {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #c0392b;
+}
+
+/* File List Styles */
+.file-list-section {
+    -fx-border-color: #ecf0f1;
+    -fx-border-radius: 10;
+    -fx-background-color: #fafbfc;
+    -fx-padding: 15;
+}
+
+.file-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 8;
+}
+
+.file-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.file-list-container {
+    -fx-background-color: white;
+    -fx-padding: 10;
+}
+
+.file-item {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e9ecef;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 3, 0, 0, 1);
+}
+
+.file-item:hover {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #3498db;
+}
+
+.file-icon {
+    -fx-background-color: #3498db;
+    -fx-background-radius: 6;
+    -fx-min-width: 40px;
+    -fx-min-height: 40px;
+    -fx-pref-width: 40px;
+    -fx-pref-height: 40px;
+    -fx-alignment: center;
+}
+
+.file-type {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.file-name {
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.file-path {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7f8c8d;
+}
+
+.remove-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e74c3c;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 8;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-cursor: hand;
+}
+
+.remove-btn:hover {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}
+
+.empty-label {
+    -fx-text-fill: #95a5a6;
+    -fx-font-style: italic;
+    -fx-alignment: center;
+    -fx-padding: 20;
+}
+
+/* Progress Section Styles */
+.progress-section {
+    -fx-border-color: #ecf0f1;
+    -fx-border-radius: 10;
+    -fx-background-color: #fafbfc;
+    -fx-padding: 15;
+    -fx-alignment: center;
+}
+
+.global-progress {
+    -fx-progress-color: #27ae60;
+}
+
+.status-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: 500;
+}
+
+/* Checkbox Styles */
+.checkbox {
+    -fx-font-size: 14px;
+    -fx-text-fill: #34495e;
+}
+
+.checkbox .box {
+    -fx-background-color: white;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 4;
+}
+
+.checkbox:selected .mark {
+    -fx-background-color: #27ae60;
+}
+
+/* Footer Styles */
+.footer {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 1 0 0 0;
+}
+
+.footer-text {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+}
