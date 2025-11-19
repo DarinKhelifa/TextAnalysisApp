@@ -31,10 +31,9 @@ public class HelloApplication extends Application {
 
         // TableView
         TableView<FileInfo> table = new TableView<>();
-<<<<<<< HEAD
-=======
+
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); // يسمح باختيار متعدد
->>>>>>> maram
+
         ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
 
         // Columns
@@ -75,9 +74,7 @@ public class HelloApplication extends Application {
             }
         });
 
-<<<<<<< HEAD
-        // 🔹 إضافة شريط البحث
-=======
+
         // Delete Selected
         deleteBtn.setOnAction(e -> {
             ObservableList<FileInfo> selected = table.getSelectionModel().getSelectedItems();
@@ -90,7 +87,7 @@ public class HelloApplication extends Application {
         });
 
         // Search
->>>>>>> maram
+
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
 
@@ -110,20 +107,20 @@ public class HelloApplication extends Application {
         sortedData.comparatorProperty().bind(table.comparatorProperty());
         table.setItems(sortedData);
 
-<<<<<<< HEAD
+
         HBox buttonsBox = new HBox(10, loadBtn, startBtn);
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(20));
         layout.getChildren().addAll(searchField, buttonsBox, table);
 
         Scene scene = new Scene(layout, 800, 500);
-=======
+
         // Layout
         HBox buttonsBox = new HBox(10, loadBtn, startBtn, deleteBtn);
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(20));
         layout.getChildren().addAll(searchField, buttonsBox, table);
->>>>>>> maram
+
 
         Scene scene = new Scene(layout, 900, 500);
         primaryStage.setTitle("Text Analyzer – Sprint 1");
