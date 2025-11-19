@@ -5,4 +5,6 @@ module com.example.textanalysisapp {
 
     opens com.example.textanalysisapp to javafx.fxml;
     exports com.example.textanalysisapp;
+    exports com.example.textanalysisapp.view;
+    opens com.example.textanalysisapp.view to javafx.fxml;
 }
