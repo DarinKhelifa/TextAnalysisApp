@@ -1,5 +1,4 @@
-
-        package com.example.textanalysisapp.view;
+package com.example.textanalysisapp.view;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -101,8 +100,7 @@ public class HelloApplication extends Application {
                 alert.showAndWait();
             }
         });
-
-// Search field
+        // Search field
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
         searchField.setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-padding: 5; -fx-pref-height: 35;");
