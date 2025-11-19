@@ -37,13 +37,17 @@ public class HelloApplication extends Application {
 
         // Buttons with inline styles as fallback
         Button loadBtn = new Button("Load Files");
-        loadBtn.setStyle("-fx-background-color: #d5c6e0; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
+
+        loadBtn.getStyleClass().addAll("styled-button", "load-button");
 
         Button startBtn = new Button("Start Analysis");
-        startBtn.setStyle("-fx-background-color: #aaa1c8; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
+        startBtn.getStyleClass().addAll("styled-button", "start-button");
 
         Button deleteBtn = new Button("Delete Selected");
-        deleteBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
+        deleteBtn.getStyleClass().addAll("styled-button", "delete-button");
+
+
+
 
         // TableView
         TableView<FileInfo> table = new TableView<>();
@@ -100,6 +104,7 @@ public class HelloApplication extends Application {
                 alert.showAndWait();
             }
         });
+
         // Search field
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
@@ -145,7 +150,8 @@ public class HelloApplication extends Application {
     private void loadExternalCSS(Scene scene) {
         try {
             // Method 1: Try from resources folder
-            URL cssUrl = getClass().getClassLoader().getResource("style.css");
+            URL cssUrl = getClass().getClassLoader().getResource("CSS/Style.css");
+
             if (cssUrl != null) {
                 System.out.println("CSS found at: " + cssUrl.toString());
                 scene.getStylesheets().add(cssUrl.toExternalForm());
@@ -153,7 +159,7 @@ public class HelloApplication extends Application {
             }
 
             // Method 2: Try direct file path
-            File cssFile = new File("src/main/resources/style.css");
+            File cssFile = new File("src/main/resources/CSS/Style.css");
             if (cssFile.exists()) {
                 System.out.println("CSS found at: " + cssFile.getAbsolutePath());
                 scene.getStylesheets().add(cssFile.toURI().toString());
@@ -161,7 +167,8 @@ public class HelloApplication extends Application {
             }
 
             // Method 3: Try relative path
-            cssFile = new File("resources/style.css");
+            cssFile = new File("resources/CSS/Style.css");
+
             if (cssFile.exists()) {
                 System.out.println("CSS found at: " + cssFile.getAbsolutePath());
                 scene.getStylesheets().add(cssFile.toURI().toString());
