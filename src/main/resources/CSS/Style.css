@@ -12,6 +12,10 @@
     -fx-padding: 20;
 }
 
+.button:hover {
+    -fx-background-color: red;
+}
+
 .header {
     -fx-background-color: -lavender-blush;
     -fx-alignment: center;
@@ -64,4 +68,19 @@
 .styled-table .column-header .label {
     -fx-text-fill: white;
     -fx-font-weight: bold;
+}
+
+.load-button:hover {
+    -fx-background-color: #c0a8d0; /* غامق شوية من thistle */
+    -fx-cursor: hand;
+}
+
+.start-button:hover {
+    -fx-background-color: #8f84b3; /* غامق شوية من lilac-ash */
+    -fx-cursor: hand;
+}
+
+.delete-button:hover {
+    -fx-background-color: #6f547d; /* غامق شوية من dusty-mauve */
+    -fx-cursor: hand;
 }
