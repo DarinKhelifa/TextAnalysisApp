@@ -27,22 +27,44 @@
 .styled-button {
     -fx-text-fill: -space-indigo;
     -fx-font-weight: bold;
-    -fx-padding: 8 15 8 15;
-    -fx-background-radius: 5;
-    -fx-border-radius: 5;
+    -fx-padding: 12 20 12 20;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-size: 14px;
+    -fx-min-height: 45px;
+    -fx-min-width: 120px;
+    -fx-cursor: hand;
 }
 
 .load-button {
     -fx-background-color: -thistle;
 }
 
+.load-button:hover {
+    -fx-background-color: derive(-thistle, -10%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
 .start-button {
     -fx-background-color: -lilac-ash;
+}
+
+.start-button:hover {
+    -fx-background-color: derive(-lilac-ash, -10%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
 }
 
 .delete-button {
     -fx-background-color: -dusty-mauve;
     -fx-text-fill: white;
+}
+
+.delete-button:hover {
+    -fx-background-color: derive(-dusty-mauve, -10%);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
 }
 
 .search-field {

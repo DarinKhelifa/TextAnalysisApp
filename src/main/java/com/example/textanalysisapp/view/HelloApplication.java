@@ -100,7 +100,6 @@ public class HelloApplication extends Application {
                 alert.showAndWait();
             }
         });
-
         // Search field
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
