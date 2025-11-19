@@ -1,11 +1,9 @@
-package com.example.textanalysisapp;
+package com.example.textanalysisapp.view;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.geometry.Insets;

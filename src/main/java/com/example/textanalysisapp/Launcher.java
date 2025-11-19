@@ -1,5 +1,6 @@
 package com.example.textanalysisapp;
 
+import com.example.textanalysisapp.view.HelloApplication;
 import javafx.application.Application;
 
 public class Launcher {
