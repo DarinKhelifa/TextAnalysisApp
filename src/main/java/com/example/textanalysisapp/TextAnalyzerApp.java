@@ -6,6 +6,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import java.io.File;
@@ -17,14 +19,18 @@ public class TextAnalyzerApp extends Application {
     private VBox fileListContainer;
     private ProgressIndicator globalProgress;
     private Label statusLabel;
+    private BorderPane mainLayout;
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("TextScope - Multi-Threaded Text Analysis");
+        primaryStage.setTitle("TextScope - Advanced Text Analysis Platform");
 
-        // Create main layout
-        BorderPane mainLayout = new BorderPane();
+        // Create main layout with sidebar
+        mainLayout = new BorderPane();
         mainLayout.getStyleClass().add("main-layout");
+
+        // Create sidebar menu
+        mainLayout.setLeft(createSidebarMenu());
 
         // Create header
         mainLayout.setTop(createHeader());
@@ -35,50 +41,241 @@ public class TextAnalyzerApp extends Application {
         // Create footer
         mainLayout.setBottom(createFooter());
 
-        Scene scene = new Scene(mainLayout, 1000, 700);
-
-        // For modular projects, use getResource with proper path
-        scene.getStylesheets().add(getClass().getResource("/com/example/textanalysisapp/styles.css").toExternalForm());
+        Scene scene = new Scene(mainLayout, 1200, 800); // Increased width for sidebar
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         primaryStage.setScene(scene);
-        primaryStage.setMinWidth(900);
-        primaryStage.setMinHeight(600);
+        primaryStage.setMinWidth(1100);
+        primaryStage.setMinHeight(700);
         primaryStage.show();
+    }
+
+    private VBox createSidebarMenu() {
+        VBox sidebar = new VBox(20);
+        sidebar.getStyleClass().add("sidebar");
+        sidebar.setPrefWidth(220);
+        sidebar.setPadding(new Insets(25, 15, 25, 15));
+
+        // Sidebar header
+        Label sidebarTitle = new Label("NAVIGATION");
+        sidebarTitle.getStyleClass().add("sidebar-title");
+
+        // Menu items
+        VBox menuItems = new VBox(8);
+        menuItems.getStyleClass().add("menu-items");
+
+        // Create menu buttons
+        Button dashboardBtn = createMenuButton("📊 Dashboard", true);
+        Button fileAnalysisBtn = createMenuButton("📁 File Analysis", false);
+        Button realTimeBtn = createMenuButton("⏱️ Real-time Analysis", false);
+        Button historyBtn = createMenuButton("📋 Analysis History", false);
+        Button settingsBtn = createMenuButton("⚙️ Settings", false);
+        Button helpBtn = createMenuButton("❓ Help & Guide", false);
+
+        menuItems.getChildren().addAll(
+                dashboardBtn, fileAnalysisBtn, realTimeBtn,
+                historyBtn, settingsBtn, helpBtn
+        );
+
+        // Add some statistics section
+        VBox statsSection = createStatsSection();
+
+        sidebar.getChildren().addAll(
+                createSidebarLogo(),
+                sidebarTitle,
+                new Separator(),
+                menuItems,
+                new Separator(),
+                statsSection
+        );
+
+        return sidebar;
+    }
+
+    private Button createMenuButton(String text, boolean active) {
+        Button button = new Button(text);
+        button.getStyleClass().add("menu-btn");
+        if (active) {
+            button.getStyleClass().add("menu-btn-active");
+        }
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setAlignment(Pos.CENTER_LEFT);
+
+        button.setOnAction(e -> {
+            // Remove active class from all buttons
+            for (var child : ((VBox) button.getParent()).getChildren()) {
+                if (child instanceof Button) {
+                    child.getStyleClass().remove("menu-btn-active");
+                }
+            }
+            // Add active class to clicked button
+            button.getStyleClass().add("menu-btn-active");
+            statusLabel.setText("Navigating to: " + text);
+        });
+
+        return button;
+    }
+
+    private HBox createSidebarLogo() {
+        HBox logoContainer = new HBox(10);
+        logoContainer.setAlignment(Pos.CENTER_LEFT);
+        logoContainer.setPadding(new Insets(0, 0, 10, 0));
+
+        // Create a modern logo using shapes
+        StackPane logo = new StackPane();
+        logo.getStyleClass().add("sidebar-logo");
+
+        // Create a document icon with magnifying glass
+        Rectangle docBase = new Rectangle(30, 36);
+        docBase.setFill(Color.web("#3498db"));
+        docBase.setArcWidth(5);
+        docBase.setArcHeight(5);
+
+        Rectangle docFold = new Rectangle(8, 8);
+        docFold.setFill(Color.web("#2980b9"));
+        docFold.setTranslateX(-11);
+        docFold.setTranslateY(-14);
+
+        Circle magnifier = new Circle(8, Color.web("#e74c3c"));
+        magnifier.setTranslateX(8);
+        magnifier.setTranslateY(8);
+
+        Circle magnifierHandle = new Circle(4, Color.web("#c0392b"));
+        magnifierHandle.setTranslateX(15);
+        magnifierHandle.setTranslateY(15);
+
+        logo.getChildren().addAll(docBase, docFold, magnifier, magnifierHandle);
+
+        VBox logoText = new VBox(2);
+        Label appName = new Label("TextScope");
+        appName.getStyleClass().add("sidebar-app-name");
+        Label appTagline = new Label("Analyze Smarter");
+        appTagline.getStyleClass().add("sidebar-app-tagline");
+
+        logoText.getChildren().addAll(appName, appTagline);
+
+        logoContainer.getChildren().addAll(logo, logoText);
+        return logoContainer;
+    }
+
+    private VBox createStatsSection() {
+        VBox statsSection = new VBox(10);
+        statsSection.getStyleClass().add("stats-section");
+
+        Label statsTitle = new Label("QUICK STATS");
+        statsTitle.getStyleClass().add("stats-title");
+
+        VBox statsItems = new VBox(8);
+
+        // Stat items
+        HBox filesStat = createStatItem("Files Analyzed", "0");
+        HBox wordsStat = createStatItem("Total Words", "0");
+        HBox timeStat = createStatItem("Time Saved", "0h 0m");
+
+        statsItems.getChildren().addAll(filesStat, wordsStat, timeStat);
+
+        statsSection.getChildren().addAll(statsTitle, statsItems);
+        return statsSection;
+    }
+
+    private HBox createStatItem(String label, String value) {
+        HBox statItem = new HBox();
+        statItem.setAlignment(Pos.CENTER_LEFT);
+        statItem.setSpacing(5);
+
+        Label statLabel = new Label(label);
+        statLabel.getStyleClass().add("stat-label");
+
+        Label statValue = new Label(value);
+        statValue.getStyleClass().add("stat-value");
+
+        // Add a small indicator dot
+        Circle dot = new Circle(3);
+        dot.setFill(Color.web("#27ae60"));
+
+        statItem.getChildren().addAll(dot, statLabel, new Region(), statValue);
+        HBox.setHgrow(statItem.getChildren().get(2), Priority.ALWAYS);
+
+        return statItem;
     }
 
     private HBox createHeader() {
         HBox header = new HBox();
         header.getStyleClass().add("header");
-        header.setPadding(new Insets(20));
+        header.setPadding(new Insets(15, 25, 15, 25));
         header.setAlignment(Pos.CENTER_LEFT);
+        header.setSpacing(20);
 
-        // App title and logo
-        HBox titleBox = new HBox(15);
-        titleBox.setAlignment(Pos.CENTER_LEFT);
+        // Left section - App info
+        HBox appInfo = new HBox(15);
+        appInfo.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("TextAnalyzer Pro");
+        VBox titleGroup = new VBox(3);
+        Label title = new Label("TextScope");
         title.getStyleClass().add("app-title");
 
-        Label subtitle = new Label("Multi-Threaded Text Analysis");
+        Label subtitle = new Label("Multi-Threaded Text Analysis Platform");
         subtitle.getStyleClass().add("app-subtitle");
 
-        VBox titleGroup = new VBox(5, title, subtitle);
-        titleBox.getChildren().addAll(createLogo(), titleGroup);
+        titleGroup.getChildren().addAll(title, subtitle);
+        appInfo.getChildren().addAll(titleGroup);
 
-        header.getChildren().add(titleBox);
+        // Center section - Quick actions
+        HBox quickActions = new HBox(10);
+        quickActions.setAlignment(Pos.CENTER);
+        quickActions.getStyleClass().add("quick-actions");
+
+        Button newProjectBtn = createHeaderButton("🆕 New Project");
+        Button templatesBtn = createHeaderButton("📋 Templates");
+        Button exportBtn = createHeaderButton("📤 Export");
+
+        quickActions.getChildren().addAll(newProjectBtn, templatesBtn, exportBtn);
+
+        // Right section - User info and controls
+        HBox userSection = new HBox(15);
+        userSection.setAlignment(Pos.CENTER_RIGHT);
+        HBox.setHgrow(userSection, Priority.ALWAYS);
+
+        // Search field
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search analyses...");
+        searchField.getStyleClass().add("search-field");
+        searchField.setPrefWidth(180);
+
+        // User profile
+        HBox userProfile = new HBox(8);
+        userProfile.setAlignment(Pos.CENTER_RIGHT);
+        userProfile.getStyleClass().add("user-profile");
+
+        StackPane userAvatar = new StackPane();
+        userAvatar.getStyleClass().add("user-avatar");
+        Label userInitial = new Label("U");
+        userInitial.getStyleClass().add("user-initial");
+        userAvatar.getChildren().add(userInitial);
+
+        VBox userInfo = new VBox(2);
+        Label userName = new Label("Current User");
+        userName.getStyleClass().add("user-name");
+        Label userRole = new Label("Analyst");
+        userRole.getStyleClass().add("user-role");
+        userInfo.getChildren().addAll(userName, userRole);
+
+        userProfile.getChildren().addAll(userInfo, userAvatar);
+
+        userSection.getChildren().addAll(searchField, userProfile);
+
+        header.getChildren().addAll(appInfo, quickActions, userSection);
 
         return header;
     }
 
-    private StackPane createLogo() {
-        StackPane logo = new StackPane();
-        logo.getStyleClass().add("logo");
-        Label logoText = new Label("TA");
-        logoText.getStyleClass().add("logo-text");
-        logo.getChildren().add(logoText);
-        return logo;
+    private Button createHeaderButton(String text) {
+        Button button = new Button(text);
+        button.getStyleClass().add("header-btn");
+        return button;
     }
 
+    // The rest of your existing methods remain the same...
     private VBox createCenterContent() {
         VBox centerContent = new VBox(20);
         centerContent.getStyleClass().add("center-content");
@@ -193,7 +390,7 @@ public class TextAnalyzerApp extends Application {
         footer.setPadding(new Insets(15));
         footer.setAlignment(Pos.CENTER);
 
-        Label footerText = new Label("TextAnalyzer Pro - Concurrency Programming Project © 2025-2026");
+        Label footerText = new Label("TextScope - Concurrency Programming Project © 2025-2026");
         footerText.getStyleClass().add("footer-text");
 
         footer.getChildren().add(footerText);
