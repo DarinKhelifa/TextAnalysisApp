@@ -24,12 +24,20 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage primaryStage) {
 
+        // Buttons
         Button loadBtn = new Button("Load Files");
         Button startBtn = new Button("Start Analysis");
+        Button deleteBtn = new Button("Delete Selected");
 
+        // TableView
         TableView<FileInfo> table = new TableView<>();
+<<<<<<< HEAD
+=======
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); // يسمح باختيار متعدد
+>>>>>>> maram
         ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
 
+        // Columns
         TableColumn<FileInfo, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
@@ -47,9 +55,9 @@ public class HelloApplication extends Application {
 
         FileChooser fileChooser = new FileChooser();
 
+        // Load Files
         loadBtn.setOnAction(e -> {
             List<File> files = fileChooser.showOpenMultipleDialog(primaryStage);
-
             if (files != null) {
                 for (File file : files) {
                     String fileName = file.getName();
@@ -67,7 +75,22 @@ public class HelloApplication extends Application {
             }
         });
 
+<<<<<<< HEAD
         // 🔹 إضافة شريط البحث
+=======
+        // Delete Selected
+        deleteBtn.setOnAction(e -> {
+            ObservableList<FileInfo> selected = table.getSelectionModel().getSelectedItems();
+            if (!selected.isEmpty()) {
+                masterData.removeAll(selected);
+            } else {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "No file selected!");
+                alert.show();
+            }
+        });
+
+        // Search
+>>>>>>> maram
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
 
@@ -87,13 +110,22 @@ public class HelloApplication extends Application {
         sortedData.comparatorProperty().bind(table.comparatorProperty());
         table.setItems(sortedData);
 
+<<<<<<< HEAD
         HBox buttonsBox = new HBox(10, loadBtn, startBtn);
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(20));
         layout.getChildren().addAll(searchField, buttonsBox, table);
 
         Scene scene = new Scene(layout, 800, 500);
+=======
+        // Layout
+        HBox buttonsBox = new HBox(10, loadBtn, startBtn, deleteBtn);
+        VBox layout = new VBox(10);
+        layout.setPadding(new Insets(20));
+        layout.getChildren().addAll(searchField, buttonsBox, table);
+>>>>>>> maram
 
+        Scene scene = new Scene(layout, 900, 500);
         primaryStage.setTitle("Text Analyzer – Sprint 1");
         primaryStage.setScene(scene);
         primaryStage.show();
