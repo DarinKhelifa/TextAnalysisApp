@@ -121,17 +121,21 @@ public class HelloApplication extends Application {
 
         Scene scene = new Scene(layout, 900, 600);
 
-        // Apply CSS styling
-        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+        // Apply CSS styling - Safe method
+        try {
+            String cssPath = getClass().getResource("/styles.css").toExternalForm();
+            scene.getStylesheets().add(cssPath);
+            System.out.println("CSS loaded successfully");
+        } catch (Exception e) {
+            System.err.println("CSS file not found. Using inline styles only.");
+            // Apply inline table styles as fallback
+            applyInlineTableStyles(table);
+        }
 
         primaryStage.setTitle("📊 Text Analyzer – Sprint 1");
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(800);
         primaryStage.setMinHeight(500);
-
-        // Add modern stage styling
-        primaryStage.getIcons().add(new javafx.scene.image.Image("/icon.png")); // Add your icon
-
         primaryStage.show();
     }
 
@@ -150,8 +154,19 @@ public class HelloApplication extends Application {
         ));
 
         // Hover effect
-        button.setOnMouseEntered(e -> button.setStyle(button.getStyle() + "-fx-scale-x: 1.05; -fx-scale-y: 1.05;"));
-        button.setOnMouseExited(e -> button.setStyle(button.getStyle().replace("-fx-scale-x: 1.05; -fx-scale-y: 1.05;", "")));
+        button.setOnMouseEntered(e -> {
+            button.setStyle(button.getStyle().replace(
+                    "dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 2)",
+                    "dropshadow(three-pass-box, rgba(0,0,0,0.5), 8, 0, 0, 3)"
+            ));
+        });
+
+        button.setOnMouseExited(e -> {
+            button.setStyle(button.getStyle().replace(
+                    "dropshadow(three-pass-box, rgba(0,0,0,0.5), 8, 0, 0, 3)",
+                    "dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 2)"
+            ));
+        });
 
         return button;
     }
@@ -190,5 +205,12 @@ public class HelloApplication extends Application {
 
         header.getChildren().add(titleBox);
         return header;
+    }
+
+    private void applyInlineTableStyles(TableView<FileInfo> table) {
+        // Inline styles as fallback when CSS is not available
+        table.setStyle(table.getStyle() +
+                " -fx-table-header-border-color: transparent;" +
+                " -fx-table-cell-border-color: transparent;");
     }
 }
