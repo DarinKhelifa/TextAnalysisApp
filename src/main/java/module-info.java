@@ -3,6 +3,7 @@ module com.example.textanalysisapp {
     requires javafx.fxml;
 
     requires com.dlsc.formsfx;
+    requires javafx.graphics;
 
     opens com.example.textanalysisapp to javafx.fxml;
     exports com.example.textanalysisapp;
