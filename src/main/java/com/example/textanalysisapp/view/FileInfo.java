@@ -4,10 +4,10 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 
 public class FileInfo {
-    private final SimpleStringProperty name;
-    private final SimpleLongProperty size;
-    private final SimpleStringProperty lastModified;
-    private final SimpleStringProperty path;
+    private SimpleStringProperty name;
+    private SimpleLongProperty size;
+    private SimpleStringProperty lastModified;
+    private SimpleStringProperty path;
 
     public FileInfo(String name, long size, String lastModified, String path) {
         this.name = new SimpleStringProperty(name);
