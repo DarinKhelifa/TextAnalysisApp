@@ -4,18 +4,22 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.geometry.Insets;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 
 import javafx.stage.FileChooser;
 import java.io.File;
 import java.util.List;
 
-public class HelloApplication extends Application {   // ⬅️ هنا تغيّر الاسم
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+
+public class HelloApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
@@ -24,6 +28,7 @@ public class HelloApplication extends Application {   // ⬅️ هنا تغيّ�
         Button startBtn = new Button("Start Analysis");
 
         TableView<FileInfo> table = new TableView<>();
+        ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
 
         TableColumn<FileInfo, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -52,7 +57,7 @@ public class HelloApplication extends Application {   // ⬅️ هنا تغيّ�
                     String lastModified = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm")
                             .format(file.lastModified());
 
-                    table.getItems().add(new FileInfo(
+                    masterData.add(new FileInfo(
                             fileName,
                             fileSize,
                             lastModified,
@@ -62,9 +67,30 @@ public class HelloApplication extends Application {   // ⬅️ هنا تغيّ�
             }
         });
 
-        VBox layout = new VBox(15);
+        // 🔹 إضافة شريط البحث
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search by name...");
+
+        FilteredList<FileInfo> filteredData = new FilteredList<>(masterData, p -> true);
+
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(file -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newValue.toLowerCase();
+                return file.getName().toLowerCase().contains(lowerCaseFilter);
+            });
+        });
+
+        SortedList<FileInfo> sortedData = new SortedList<>(filteredData);
+        sortedData.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sortedData);
+
+        HBox buttonsBox = new HBox(10, loadBtn, startBtn);
+        VBox layout = new VBox(10);
         layout.setPadding(new Insets(20));
-        layout.getChildren().addAll(loadBtn, startBtn, table);
+        layout.getChildren().addAll(searchField, buttonsBox, table);
 
         Scene scene = new Scene(layout, 800, 500);
 
