@@ -12,10 +12,6 @@
     -fx-padding: 20;
 }
 
-.button:hover {
-    -fx-background-color: red;
-}
-
 .header {
     -fx-background-color: -lavender-blush;
     -fx-alignment: center;
@@ -46,7 +42,7 @@
 
 .delete-button {
     -fx-background-color: -dusty-mauve;
-    -fx-text-fill: white;
+    -fx-text-fill: black;
 }
 
 .search-field {
