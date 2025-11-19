@@ -22,20 +22,37 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 public class HelloApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Header
+        // Header Label
         Label headerLabel = new Label("Text Analyzer");
         headerLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
 
-        HBox headerBox = new HBox(headerLabel);
+        // Load logo image safely
+        ImageView logoView = new ImageView();
+        URL logoUrl = getClass().getClassLoader().getResource("images/logo.png");
+        if (logoUrl != null) {
+            Image logoImage = new Image(logoUrl.toExternalForm());
+            logoView.setImage(logoImage);
+            logoView.setFitWidth(40);
+            logoView.setPreserveRatio(true);
+        } else {
+            System.out.println("Logo image not found!");
+        }
+
+        // Header Box containing logo + label
+        HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER);
+        headerBox.getChildren().addAll(logoView, headerLabel);
         headerBox.setPadding(new Insets(15));
         headerBox.setStyle("-fx-background-color: #f5e6e8;");
 
-        // Buttons with inline styles as fallback
+        // Buttons
         Button loadBtn = new Button("Load Files");
         loadBtn.getStyleClass().addAll("styled-button", "load-button");
 
@@ -45,12 +62,9 @@ public class HelloApplication extends Application {
         Button deleteBtn = new Button("Delete Selected");
         deleteBtn.getStyleClass().addAll("styled-button", "delete-button");
 
-
-
         // TableView
         TableView<FileInfo> table = new TableView<>();
         table.setStyle("-fx-control-inner-background: #f5e6e8; -fx-background-color: #f5e6e8;");
-
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
 
@@ -81,13 +95,7 @@ public class HelloApplication extends Application {
                     long fileSize = file.length() / 1024;
                     String lastModified = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm")
                             .format(file.lastModified());
-
-                    masterData.add(new FileInfo(
-                            fileName,
-                            fileSize,
-                            lastModified,
-                            file.getAbsolutePath()
-                    ));
+                    masterData.add(new FileInfo(fileName, fileSize, lastModified, file.getAbsolutePath()));
                 }
             }
         });
@@ -103,20 +111,29 @@ public class HelloApplication extends Application {
             }
         });
 
-        // Search field
+        // Search field (مصغر ومركزي)
         TextField searchField = new TextField();
         searchField.setPromptText("Search by name...");
-        searchField.setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-padding: 5; -fx-pref-height: 35;");
+        searchField.setPrefWidth(200);   // عرض أصغر
+        searchField.setPrefHeight(25);   // ارتفاع أصغر
+        searchField.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d5c6e0; " +
+                        "-fx-border-radius: 5; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-padding: 3;"
+        );
+
+        // توسيط شريط البحث
+        HBox searchBox = new HBox(searchField);
+        searchBox.setAlignment(Pos.CENTER);
+        searchBox.setPadding(new Insets(5));
 
         FilteredList<FileInfo> filteredData = new FilteredList<>(masterData, p -> true);
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
             filteredData.setPredicate(file -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-                String lowerCaseFilter = newValue.toLowerCase();
-                return file.getName().toLowerCase().contains(lowerCaseFilter);
+                if (newVal == null || newVal.isEmpty()) return true;
+                return file.getName().toLowerCase().contains(newVal.toLowerCase());
             });
         });
 
@@ -131,13 +148,10 @@ public class HelloApplication extends Application {
         VBox layout = new VBox(10);
         layout.setStyle("-fx-background-color: #f5e6e8;");
         layout.setPadding(new Insets(20));
-        layout.getChildren().addAll(headerBox, searchField, buttonsBox, table);
-
+        layout.getChildren().addAll(headerBox, searchBox, buttonsBox, table);
         VBox.setVgrow(table, Priority.ALWAYS);
 
         Scene scene = new Scene(layout, 900, 500);
-
-        // Try to load external CSS
         loadExternalCSS(scene);
 
         primaryStage.setTitle("Text Analyzer – Sprint 1");
@@ -147,32 +161,22 @@ public class HelloApplication extends Application {
 
     private void loadExternalCSS(Scene scene) {
         try {
-            // Method 1: Try from resources folder
             URL cssUrl = getClass().getClassLoader().getResource("CSS/Style.css");
             if (cssUrl != null) {
-                System.out.println("CSS found at: " + cssUrl.toString());
                 scene.getStylesheets().add(cssUrl.toExternalForm());
                 return;
             }
-
-            // Method 2: Try direct file path
             File cssFile = new File("src/main/resources/CSS/Style.css");
             if (cssFile.exists()) {
-                System.out.println("CSS found at: " + cssFile.getAbsolutePath());
                 scene.getStylesheets().add(cssFile.toURI().toString());
                 return;
             }
-
-            // Method 3: Try relative path
             cssFile = new File("resources/CSS/Style.css");
             if (cssFile.exists()) {
-                System.out.println("CSS found at: " + cssFile.getAbsolutePath());
                 scene.getStylesheets().add(cssFile.toURI().toString());
                 return;
             }
-
             System.out.println("CSS file not found. Using inline styles only.");
-
         } catch (Exception e) {
             System.out.println("Error loading CSS: " + e.getMessage());
         }
