@@ -1,5 +1,7 @@
 package com.example.textanalysisapp.view;
 
+import com.example.textanalysisapp.controller.AnalysisManager;
+import com.example.textanalysisapp.controller.FileController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
@@ -30,7 +32,6 @@ import javafx.scene.text.Text;
 // Add these imports for Sprint 2
 import javafx.concurrent.Task;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class HelloApplication extends Application {
 
@@ -40,9 +41,15 @@ public class HelloApplication extends Application {
     private Label statusLabel;
     private VBox resultsContainer;
     private VBox progressBox;
+    private AnalysisManager analysisManager;
+    private TableView<FileInfo> table;
+    private ObservableList<FileInfo> masterData;
 
     @Override
     public void start(Stage primaryStage) {
+        // Initialize AnalysisManager
+        analysisManager = new AnalysisManager();
+
         // Header with Logo and App Name
         HBox headerBox = createHeader();
 
@@ -102,10 +109,10 @@ public class HelloApplication extends Application {
         resultsContainer.setPrefHeight(250);
 
         // TableView
-        TableView<FileInfo> table = new TableView<>();
+        table = new TableView<>();
         table.setStyle("-fx-control-inner-background: #f5e6e8; -fx-background-color: #f5e6e8;");
-        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE); // Single selection for Sprint 2
-        ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
+        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        masterData = FXCollections.observableArrayList();
 
         // Columns
         TableColumn<FileInfo, String> nameCol = new TableColumn<>("Name");
@@ -183,214 +190,48 @@ public class HelloApplication extends Application {
             }
         });
 
-        // Add Sprint 2: Start Analysis with progress tracking
+        // Add Sprint 2: Start Analysis with progress tracking - CLEAN VERSION
         startBtn.setOnAction(e -> {
             FileInfo selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                // Disable buttons during analysis
-                startBtn.setDisable(true);
-                loadBtn.setDisable(true);
-                deleteBtn.setDisable(true);
-                cancelBtn.setDisable(false);
+                File file = new File(selected.getPath());
 
-                // Show progress UI
-                progressBox.setVisible(true);
-                progressBar.setVisible(true);
-                progressBar.setProgress(0);
-                statusLabel.setText("Analyzing: " + selected.getName() + "...");
+                // Validate file
+                if (!FileController.validateFile(file)) {
+                    return;
+                }
 
                 // Hide previous results
                 resultsContainer.setVisible(false);
 
-                // Create analysis task - Now calculates ALL statistics
-                Task<Map<String, Object>> task = new Task<Map<String, Object>>() {
-                    @Override
-                    protected Map<String, Object> call() throws Exception {
-                        Map<String, Object> results = new HashMap<>();
-                        File file = new File(selected.getPath());
+                // Create and start analysis task using AnalysisManager
+                Task<Map<String, Object>> task = analysisManager.createAnalysisTask(
+                        file, startBtn, cancelBtn, progressBar, statusLabel
+                );
 
-                        // Check if file exists
-                        if (!file.exists()) {
-                            throw new Exception("File not found: " + selected.getName());
-                        }
+                // Setup task handlers with callback for results
+                analysisManager.setupTaskHandlers(
+                        task, startBtn, cancelBtn, progressBar, statusLabel,
+                        new AnalysisManager.AnalysisResultCallback() {
+                            @Override
+                            public void onAnalysisComplete(Map<String, Object> results) {
+                                displayResults(results);
+                                statusLabel.setText("Analysis complete!");
+                            }
 
-                        // Check if file is empty
-                        if (file.length() == 0) {
-                            throw new Exception("File is empty: " + selected.getName());
-                        }
+                            @Override
+                            public void onAnalysisFailed(String errorMessage) {
+                                statusLabel.setText("Analysis failed");
+                            }
 
-                        // Read file content
-                        updateProgress(10, 100);
-                        updateMessage("Reading file content...");
-                        String content;
-                        try {
-                            content = new String(java.nio.file.Files.readAllBytes(file.toPath()));
-                        } catch (Exception ex) {
-                            throw new Exception("Cannot read file. It might be binary or corrupted.");
-                        }
-
-                        if (content.trim().isEmpty()) {
-                            throw new Exception("File contains only whitespace.");
-                        }
-
-                        // ================================================
-                        // PERFORM ALL ANALYSIS CALCULATIONS
-                        // ================================================
-
-                        // 1. Word count
-                        updateProgress(20, 100);
-                        updateMessage("Counting words...");
-                        String[] words = content.split("\\s+");
-                        int totalWords = words.length;
-                        results.put("totalWords", totalWords);
-
-                        // 2. Unique words
-                        updateProgress(30, 100);
-                        updateMessage("Finding unique words...");
-                        Set<String> uniqueWords = Arrays.stream(words)
-                                .map(word -> word.toLowerCase().replaceAll("[^a-zA-Z]", ""))
-                                .filter(word -> !word.isEmpty())
-                                .collect(Collectors.toSet());
-                        results.put("uniqueWords", uniqueWords.size());
-
-                        // 3. Character counts
-                        updateProgress(40, 100);
-                        updateMessage("Counting characters...");
-                        int charsWithSpaces = content.length();
-                        int charsWithoutSpaces = content.replace(" ", "").length();
-                        results.put("charsWithSpaces", charsWithSpaces);
-                        results.put("charsWithoutSpaces", charsWithoutSpaces);
-
-                        // 4. Most frequent words
-                        updateProgress(50, 100);
-                        updateMessage("Analyzing word frequency...");
-                        Map<String, Integer> wordFrequency = new HashMap<>();
-                        for (String word : words) {
-                            String cleanWord = word.toLowerCase().replaceAll("[^a-zA-Z]", "");
-                            if (!cleanWord.isEmpty()) {
-                                wordFrequency.put(cleanWord, wordFrequency.getOrDefault(cleanWord, 0) + 1);
+                            @Override
+                            public void onAnalysisCancelled() {
+                                statusLabel.setText("Analysis cancelled");
                             }
                         }
+                );
 
-                        String topWords = wordFrequency.entrySet().stream()
-                                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                                .limit(5)
-                                .map(e -> e.getKey() + " (" + e.getValue() + ")")
-                                .collect(Collectors.joining(", "));
-                        results.put("mostFrequent", topWords.isEmpty() ? "No words found" : topWords);
-
-                        // 5. Reading time (200 words per minute)
-                        updateProgress(60, 100);
-                        updateMessage("Calculating reading time...");
-                        double readingTime = totalWords / 200.0;
-                        results.put("readingTime", String.format("%.1f", readingTime));
-
-                        // 6. Sentence count (simple approximation)
-                        updateProgress(70, 100);
-                        updateMessage("Counting sentences...");
-                        int sentenceCount = content.split("[.!?]+").length;
-                        results.put("sentenceCount", sentenceCount);
-
-                        // 7. Average word length
-                        updateProgress(80, 100);
-                        updateMessage("Calculating average word length...");
-                        double avgWordLength = words.length > 0 ?
-                                (double) charsWithoutSpaces / words.length : 0;
-                        results.put("avgWordLength", String.format("%.2f", avgWordLength));
-
-                        // 8. Basic sentiment analysis
-                        updateProgress(90, 100);
-                        updateMessage("Analyzing sentiment...");
-                        String sentiment = analyzeSentiment(content);
-                        results.put("sentiment", sentiment);
-
-                        // 9. File metadata
-                        results.put("fileName", selected.getName());
-                        results.put("fileSize", selected.getSize() + " KB");
-
-                        updateProgress(100, 100);
-                        updateMessage("Analysis complete!");
-
-                        return results;
-                    }
-
-                    // Sentiment analysis helper method
-                    private String analyzeSentiment(String text) {
-                        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best", "nice", "awesome", "positive"};
-                        String[] negativeWords = {"bad", "terrible", "awful", "sad", "hate", "worst", "poor", "horrible", "negative"};
-
-                        text = text.toLowerCase();
-                        int positiveCount = 0;
-                        int negativeCount = 0;
-
-                        for (String word : positiveWords) {
-                            if (text.contains(word)) positiveCount++;
-                        }
-                        for (String word : negativeWords) {
-                            if (text.contains(word)) negativeCount++;
-                        }
-
-                        if (positiveCount > negativeCount) return "Positive";
-                        if (negativeCount > positiveCount) return "Negative";
-                        return "Neutral";
-                    }
-                };
-
-                // Bind progress bar to task progress
-                progressBar.progressProperty().bind(task.progressProperty());
-
-                // Update status label with task messages
-                task.messageProperty().addListener((obs, oldMsg, newMsg) -> {
-                    statusLabel.setText(newMsg);
-                });
-
-                // Handle successful completion
-                task.setOnSucceeded(event -> {
-                    Map<String, Object> results = task.getValue();
-                    displayResults(results);
-
-                    // Reset UI
-                    resetAnalysisUI();
-                    statusLabel.setText("Analysis complete!");
-
-                    // Hide progress after delay
-                    new java.util.Timer().schedule(
-                            new java.util.TimerTask() {
-                                @Override
-                                public void run() {
-                                    javafx.application.Platform.runLater(() -> {
-                                        progressBox.setVisible(false);
-                                    });
-                                }
-                            },
-                            1000
-                    );
-                });
-
-                // Handle failure
-                task.setOnFailed(event -> {
-                    Throwable exception = task.getException();
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Analysis Error");
-                    alert.setHeaderText("Failed to analyze " + selected.getName());
-                    alert.setContentText(exception.getMessage());
-                    alert.showAndWait();
-
-                    resetAnalysisUI();
-                    statusLabel.setText("Analysis failed");
-                });
-
-                // Cancel button action
-                cancelBtn.setOnAction(event -> {
-                    if (task.isRunning()) {
-                        task.cancel();
-                        resetAnalysisUI();
-                        statusLabel.setText("Analysis cancelled");
-                        progressBox.setVisible(false);
-                    }
-                });
-
-                // Start the analysis in a new thread
+                // Start the task
                 new Thread(task).start();
 
             } else {
@@ -454,29 +295,6 @@ public class HelloApplication extends Application {
         primaryStage.setTitle("VioletLens - Text Analyzer (Sprint 2)");
         primaryStage.setScene(scene);
         primaryStage.show();
-    }
-
-    /**
-     * Reset UI after analysis (success, failure, or cancellation)
-     */
-    private void resetAnalysisUI() {
-        // Find buttons by looking at parent
-        VBox layout = (VBox) progressBox.getParent();
-        HBox buttonsBox = (HBox) layout.getChildren().get(3); // 4th element is buttonsBox
-
-        for (javafx.scene.Node node : buttonsBox.getChildren()) {
-            if (node instanceof Button) {
-                Button btn = (Button) node;
-                String text = btn.getText();
-                if (text.equals("Start Analysis") || text.equals("Load Files") || text.equals("Delete Selected")) {
-                    btn.setDisable(false);
-                } else if (text.equals("Cancel Analysis")) {
-                    btn.setDisable(true);
-                }
-            }
-        }
-
-        progressBar.setVisible(false);
     }
 
     /**

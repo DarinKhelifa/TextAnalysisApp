@@ -1,38 +1,55 @@
 package com.example.textanalysisapp.controller;
 
-import com.example.textanalysisapp.model.TextFile;
 import com.example.textanalysisapp.utils.ErrorHandler;
-import javafx.scene.control.Alert;
+
 import java.io.File;
+import java.nio.file.Files;
 
 public class FileController {
 
-    public static TextFile loadTextFile(File file) {
+    /**
+     * Read file content with error handling
+     */
+    public static String readFileContent(File file) throws Exception {
         try {
-            if (!file.exists()) {
-                throw new IllegalArgumentException("File does not exist: " + file.getPath());
-            }
-
-            if (file.length() == 0) {
-                throw new IllegalArgumentException("File is empty: " + file.getName());
-            }
-
-            // Check if it's a text file (basic check)
-            String name = file.getName().toLowerCase();
-            if (!name.endsWith(".txt") && !name.endsWith(".md") && !name.endsWith(".java")
-                    && !name.endsWith(".xml") && !name.endsWith(".json")) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Non-Text File Warning");
-                alert.setHeaderText("File may not be plain text");
-                alert.setContentText("The selected file may not be a plain text file. Analysis may not work correctly.");
-                alert.showAndWait();
-            }
-
-            return new TextFile(file);
-
+            return new String(Files.readAllBytes(file.toPath()));
         } catch (Exception e) {
-            ErrorHandler.showError("Failed to load file", e);
-            return null;
+            throw new Exception("Cannot read file. It might be binary or corrupted: " + e.getMessage());
         }
+    }
+
+    /**
+     * Validate a file before analysis
+     */
+    public static boolean validateFile(File file) {
+        if (!file.exists()) {
+            ErrorHandler.showWarning("File not found", "The file does not exist: " + file.getName());
+            return false;
+        }
+
+        if (file.length() == 0) {
+            ErrorHandler.showWarning("Empty file", "The file is empty: " + file.getName());
+            return false;
+        }
+
+        // Check file extension
+        String name = file.getName().toLowerCase();
+        String[] allowedExtensions = {".txt", ".md", ".java", ".xml", ".json", ".csv", ".html", ".htm"};
+
+        boolean isTextFile = false;
+        for (String ext : allowedExtensions) {
+            if (name.endsWith(ext)) {
+                isTextFile = true;
+                break;
+            }
+        }
+
+        if (!isTextFile) {
+            ErrorHandler.showWarning("Non-text file",
+                    "The file may not be a plain text file. Analysis may not work correctly.");
+            // Continue anyway, but warn the user
+        }
+
+        return true;
     }
 }

@@ -13,10 +13,18 @@ public class ErrorHandler {
         alert.showAndWait();
     }
 
-    public static void showWarning(String message) {
+    public static void showWarning(String title, String message) {
         Alert alert = new Alert(AlertType.WARNING);
         alert.setTitle("Warning");
-        alert.setHeaderText(null);
+        alert.setHeaderText(title);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    public static void showInfo(String title, String message) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(title);
         alert.setContentText(message);
         alert.showAndWait();
     }
