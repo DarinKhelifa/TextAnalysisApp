@@ -40,27 +40,27 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
 }
 
-.load-button {
+/*.load-button {
     -fx-background-color: -thistle;
-}
+}*/
 
-.start-button {
+/*.start-button {
     -fx-background-color: -lilac-ash;
-}
+}*/
 
-.delete-button {
+/*.delete-button {
     -fx-background-color: -dusty-mauve;
     -fx-text-fill: white;
-}
+}*/
 
-.search-field {
+/*.search-field {
     -fx-background-color: white;
     -fx-border-color: -thistle;
     -fx-padding: 5;
     -fx-pref-height: 35;
     -fx-background-radius: 5;
     -fx-border-radius: 5;
-}
+}*/
 
 .styled-table {
     -fx-control-inner-background: -lavender-blush;
@@ -93,7 +93,7 @@
     -fx-background-color: -lilac-ash;
 }
 
-.load-button:hover {
+/*.load-button:hover {
     -fx-background-color: #c0a8d0;
     -fx-cursor: hand;
     -fx-scale-x: 1.05;
@@ -112,7 +112,7 @@
     -fx-cursor: hand;
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
-}
+}*/
 
 .description-label {
     -fx-font-size: 14px;
