@@ -1,5 +1,6 @@
 package com.example.textanalysisapp.view;
 
+import com.example.textanalysisapp.controller.AnalysisController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -30,9 +31,9 @@ import javafx.scene.text.TextAlignment;
 public class HelloApplication extends Application {
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) {// adi nogtat el bidaia ta3 app
         // Header with Logo and App Name
-        HBox headerBox = createHeader();
+        HBox headerBox = createHeader(); //
 
         // App Description
         Label descriptionLabel = new Label("Analyze your text files with powerful insights and statistics");
@@ -54,13 +55,13 @@ public class HelloApplication extends Application {
         deleteBtn.setPrefSize(140, 40);
 
         // Add hover effects
-        setupButtonHoverEffects(loadBtn, startBtn, deleteBtn);
+        setupButtonHoverEffects(loadBtn, startBtn, deleteBtn);// tb3thom l style css
 
         // TableView
-        TableView<FileInfo> table = new TableView<>();
+        TableView<FileInfo> table = new TableView<>();// create table for files
         table.setStyle("-fx-control-inner-background: #f5e6e8; -fx-background-color: #f5e6e8;");
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
+        ObservableList<FileInfo> masterData = FXCollections.observableArrayList();// takhzine el baianat ta3 file f table
 
         // Columns
         TableColumn<FileInfo, String> nameCol = new TableColumn<>("Name");
@@ -89,7 +90,7 @@ public class HelloApplication extends Application {
                     long fileSize = file.length() / 1024;
                     String lastModified = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm")
                             .format(file.lastModified());
-                    masterData.add(new FileInfo(fileName, fileSize, lastModified, file.getAbsolutePath()));
+                    masterData.add(new FileInfo(fileName, fileSize, lastModified, file.getAbsolutePath()));// yzidhom ll table
                 }
             }
         });
@@ -136,16 +137,56 @@ public class HelloApplication extends Application {
         table.setItems(sortedData);
 
         // Layout
-        HBox buttonsBox = new HBox(20, loadBtn, startBtn, deleteBtn);
+        HBox buttonsBox = new HBox(20, loadBtn, startBtn, deleteBtn);  // to make the bottons in the center
         buttonsBox.setPadding(new Insets(15, 0, 15, 0));
         buttonsBox.setAlignment(Pos.CENTER);
+        ProgressBar progressBar = new ProgressBar(0);
+        progressBar.setPrefWidth(400);
+        progressBar.setVisible(false);
+
+        Label totalWordsLabel = new Label("Total Words: ");
+        Label uniqueWordsLabel = new Label("Unique Words: ");
+
+        TextArea frequentWordsArea = new TextArea();
+        frequentWordsArea.setEditable(false);
+        frequentWordsArea.setPromptText("Most frequent words...");
+
+        VBox resultBox = new VBox(10,
+                progressBar,
+                totalWordsLabel,
+                uniqueWordsLabel,
+                frequentWordsArea
+        );
+        resultBox.setPadding(new Insets(10));
+
+
+        // ✅ CONTROLLER CONNECTION (هاد السطر كان ناقص عندك)
+        AnalysisController controller = new AnalysisController(
+                progressBar,
+                totalWordsLabel,
+                uniqueWordsLabel,
+                frequentWordsArea
+        );
+
+        // ✅ Start Analysis Button Fix (هاد السطر هو سبب المشكل)
+        startBtn.setOnAction(e -> {
+            FileInfo selectedFile = table.getSelectionModel().getSelectedItem();
+            controller.startAnalysis(selectedFile);
+        });
 
 
 
         VBox layout = new VBox(10);
         layout.setStyle("-fx-background-color: #f5e6e8;");
         layout.setPadding(new Insets(20));
-        layout.getChildren().addAll(headerBox, descriptionLabel, searchBox, buttonsBox, table);
+        layout.getChildren().addAll(
+                headerBox,
+                descriptionLabel,
+                searchBox,
+                buttonsBox,
+                resultBox,
+                table
+        );
         VBox.setVgrow(table, Priority.ALWAYS);
 
         Scene scene = new Scene(layout, 900, 550);
@@ -176,9 +217,9 @@ public class HelloApplication extends Application {
         try {
             // Try multiple possible paths for the logo
             URL logoUrl = getClass().getResource("/images/logo.png");
-            if (logoUrl == null) {
+         /*   if (logoUrl == null) {
                 logoUrl = getClass().getResource("images/logo.png");
-            }
+            }*/
             if (logoUrl == null) {
                 logoUrl = getClass().getClassLoader().getResource("images/logo.png");
             }
