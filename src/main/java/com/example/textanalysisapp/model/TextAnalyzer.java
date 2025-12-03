@@ -1,211 +1,49 @@
 package com.example.textanalysisapp.model;
 
-<<<<<<< HEAD
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-
-public class TextAnalyzer {
-
-    public static Map<String, Integer> analyze(Path filePath) throws IOException {
-        String content = "";
-
-        // Get file extension
-        String fileName = filePath.toString().toLowerCase();
-
-        if (fileName.endsWith(".pdf")) {
-            // For PDF files, you would need a PDF library
-            // Here's a placeholder for PDF handling
-            content = extractTextFromPDF(filePath);
-        } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-            // For Word documents
-            content = extractTextFromWord(filePath);
-        } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-            // For Excel files
-            content = extractTextFromExcel(filePath);
-        } else if (fileName.endsWith(".pptx") || fileName.endsWith(".ppt")) {
-            // For PowerPoint files
-            content = extractTextFromPowerPoint(filePath);
-        } else if (fileName.endsWith(".txt") || fileName.endsWith(".csv") ||
-                fileName.endsWith(".html") || fileName.endsWith(".htm") ||
-                fileName.endsWith(".xml") || fileName.endsWith(".json") ||
-                fileName.endsWith(".md") || fileName.endsWith(".rtf")) {
-            // For plain text and markup files
-            content = Files.readString(filePath);
-        } else {
-            // Try to read as plain text for unknown file types
-            content = tryReadAsText(filePath);
-        }
-
-        return analyzeText(content);
-    }
-
-    private static Map<String, Integer> analyzeText(String content) {
-        if (content == null || content.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        // Clean and split text
-        content = content.toLowerCase()
-                .replaceAll("[^a-zA-Z0-9 ]", " ")
-                .replaceAll("\\s+", " ");
-
-        String[] words = content.split("\\s+");
-
-        Map<String, Integer> frequency = new HashMap<>();
-
-        for (String word : words) {
-            if (!word.isEmpty() && word.length() > 1) { // Filter out single characters
-                frequency.put(word, frequency.getOrDefault(word, 0) + 1);
-            }
-        }
-
-        return frequency;
-    }
-
-    // Placeholder methods for different file types
-    private static String extractTextFromPDF(Path filePath) throws IOException {
-        // You would need to add a PDF library like Apache PDFBox
-        // Example with PDFBox (you would need to add the dependency):
-        /*
-        try (PDDocument document = PDDocument.load(filePath.toFile())) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            return stripper.getText(document);
-        }
-        */
-        throw new UnsupportedOperationException("PDF processing requires Apache PDFBox library");
-    }
-
-    private static String extractTextFromWord(Path filePath) throws IOException {
-        // You would need Apache POI for Word documents
-        // Example with POI (you would need to add the dependency):
-        /*
-        FileInputStream fis = new FileInputStream(filePath.toFile());
-        XWPFDocument document = new XWPFDocument(fis);
-        StringBuilder text = new StringBuilder();
-        for (XWPFParagraph paragraph : document.getParagraphs()) {
-            text.append(paragraph.getText()).append("\n");
-        }
-        document.close();
-        fis.close();
-        return text.toString();
-        */
-        throw new UnsupportedOperationException("Word processing requires Apache POI library");
-    }
-
-    private static String extractTextFromExcel(Path filePath) throws IOException {
-        // Using Apache POI for Excel
-        /*
-        FileInputStream fis = new FileInputStream(filePath.toFile());
-        Workbook workbook = new XSSFWorkbook(fis); // for .xlsx
-        StringBuilder text = new StringBuilder();
-
-        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            Sheet sheet = workbook.getSheetAt(i);
-            for (Row row : sheet) {
-                for (Cell cell : row) {
-                    text.append(cell.toString()).append(" ");
-                }
-                text.append("\n");
-            }
-        }
-        workbook.close();
-        fis.close();
-        return text.toString();
-        */
-        throw new UnsupportedOperationException("Excel processing requires Apache POI library");
-    }
-
-    private static String extractTextFromPowerPoint(Path filePath) throws IOException {
-        // Using Apache POI for PowerPoint
-        /*
-        FileInputStream fis = new FileInputStream(filePath.toFile());
-        XMLSlideShow ppt = new XMLSlideShow(fis);
-        StringBuilder text = new StringBuilder();
-
-        for (XSLFSlide slide : ppt.getSlides()) {
-            for (XSLFShape shape : slide.getShapes()) {
-                if (shape instanceof XSLFTextShape) {
-                    XSLFTextShape textShape = (XSLFTextShape) shape;
-                    text.append(textShape.getText()).append("\n");
-                }
-            }
-        }
-        ppt.close();
-        fis.close();
-        return text.toString();
-        */
-        throw new UnsupportedOperationException("PowerPoint processing requires Apache POI library");
-    }
-
-    private static String tryReadAsText(Path filePath) {
-        try {
-            // Try to read as plain text with UTF-8 encoding
-            byte[] bytes = Files.readAllBytes(filePath);
-            return new String(bytes, "UTF-8");
-        } catch (Exception e) {
-            return "Unable to read file as text. File type might not be supported.";
-        }
-    }
-
-    public static int totalWords(Map<String, Integer> freq) {
-        return freq.values().stream().mapToInt(i -> i).sum();
-    }
-
-    public static int uniqueWords(Map<String, Integer> freq) {
-        return freq.size();
-    }
-
-    // Additional utility methods
-    public static Map<String, Integer> analyze(String text) {
-        return analyzeText(text);
-    }
-
-    public static List<String> getMostFrequentWords(Map<String, Integer> freq, int limit) {
-        return freq.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                .limit(limit)
-                .map(Map.Entry::getKey)
-                .toList();
-    }
-
-    public static Map<String, Double> getWordFrequenciesPercent(Map<String, Integer> freq) {
-        int total = totalWords(freq);
-        Map<String, Double> percentages = new HashMap<>();
-
-        for (Map.Entry<String, Integer> entry : freq.entrySet()) {
-            double percentage = (entry.getValue() * 100.0) / total;
-            percentages.put(entry.getKey(), percentage);
-        }
-
-        return percentages;
-=======
-import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TextAnalyzer {
 
-    public AnalysisResult analyze(TextFile textFile) {
-        String content = textFile.getContent();
-        AnalysisResult result = new AnalysisResult(textFile.getFile().getName());
+    /**
+     * Analyze text and return a map of results
+     * @param content The text content to analyze
+     * @return Map containing all analysis statistics
+     */
+    public Map<String, Object> analyzeText(String content) {
+        Map<String, Object> results = new HashMap<>();
+
+        if (content == null || content.trim().isEmpty()) {
+            // Return empty results for empty content
+            results.put("totalWords", 0);
+            results.put("uniqueWords", 0);
+            results.put("charsWithSpaces", 0);
+            results.put("charsWithoutSpaces", 0);
+            results.put("mostFrequent", "No words found");
+            results.put("readingTime", "0.0");
+            results.put("sentenceCount", 0);
+            results.put("avgWordLength", "0.00");
+            results.put("sentiment", "Neutral");
+            return results;
+        }
 
         // 1. Word count
         String[] words = content.split("\\s+");
         int totalWords = words.length;
-        result.setTotalWords(totalWords);
+        results.put("totalWords", totalWords);
 
         // 2. Unique words
         Set<String> uniqueWords = Arrays.stream(words)
-                .map(String::toLowerCase)
+                .map(word -> word.toLowerCase().replaceAll("[^a-zA-Z]", ""))
+                .filter(word -> !word.isEmpty())
                 .collect(Collectors.toSet());
-        result.setUniqueWords(uniqueWords.size());
+        results.put("uniqueWords", uniqueWords.size());
 
-        // 3. Character count (with/without spaces)
+        // 3. Character counts
         int charsWithSpaces = content.length();
         int charsWithoutSpaces = content.replace(" ", "").length();
-        result.setCharacterCount(charsWithSpaces);
+        results.put("charsWithSpaces", charsWithSpaces);
+        results.put("charsWithoutSpaces", charsWithoutSpaces);
 
         // 4. Most frequent words
         Map<String, Integer> wordFrequency = new HashMap<>();
@@ -221,23 +59,34 @@ public class TextAnalyzer {
                 .limit(5)
                 .map(e -> e.getKey() + " (" + e.getValue() + ")")
                 .collect(Collectors.joining(", "));
-        result.setMostFrequent(topWords);
+        results.put("mostFrequent", topWords.isEmpty() ? "No words found" : topWords);
 
         // 5. Reading time (200 words per minute)
         double readingTime = totalWords / 200.0;
-        result.setReadingTime(Math.round(readingTime * 10.0) / 10.0);
+        results.put("readingTime", String.format("%.1f", readingTime));
 
-        // 6. Sentiment analysis (basic)
+        // 6. Sentence count (simple approximation)
+        int sentenceCount = content.split("[.!?]+").length;
+        results.put("sentenceCount", sentenceCount);
+
+        // 7. Average word length
+        double avgWordLength = words.length > 0 ?
+                (double) charsWithoutSpaces / words.length : 0;
+        results.put("avgWordLength", String.format("%.2f", avgWordLength));
+
+        // 8. Basic sentiment analysis
         String sentiment = analyzeSentiment(content);
-        result.setSentiment(sentiment);
+        results.put("sentiment", sentiment);
 
-        return result;
+        return results;
     }
 
+    /**
+     * Basic sentiment analysis
+     */
     private String analyzeSentiment(String text) {
-        // Simple dictionary-based sentiment
-        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best"};
-        String[] negativeWords = {"bad", "terrible", "awful", "sad", "hate", "worst"};
+        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best", "nice", "awesome", "positive"};
+        String[] negativeWords = {"bad", "terrible", "awful", "sad", "hate", "worst", "poor", "horrible", "negative"};
 
         text = text.toLowerCase();
         int positiveCount = 0;
@@ -253,6 +102,30 @@ public class TextAnalyzer {
         if (positiveCount > negativeCount) return "Positive";
         if (negativeCount > positiveCount) return "Negative";
         return "Neutral";
->>>>>>> feature/darine
+    }
+
+    /**
+     * Utility method to get total words from a frequency map
+     */
+    public static int totalWords(Map<String, Integer> freq) {
+        return freq.values().stream().mapToInt(i -> i).sum();
+    }
+
+    /**
+     * Utility method to get unique word count from a frequency map
+     */
+    public static int uniqueWords(Map<String, Integer> freq) {
+        return freq.size();
+    }
+
+    /**
+     * Get most frequent words from a frequency map
+     */
+    public static List<String> getMostFrequentWords(Map<String, Integer> freq, int limit) {
+        return freq.entrySet().stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 }
