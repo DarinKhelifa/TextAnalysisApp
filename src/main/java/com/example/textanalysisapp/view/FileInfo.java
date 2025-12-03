@@ -1,7 +1,7 @@
 package com.example.textanalysisapp.view;
 
 import javafx.beans.property.SimpleLongProperty;
-import javafx.beans.property.SimpleStringProperty;// adi bah kima tesra update 3la attrebute f table direct ybdelha mach yastene 7ata ndir refresh
+import javafx.beans.property.SimpleStringProperty;
 
 public class FileInfo {
     private SimpleStringProperty name;
