@@ -2,6 +2,7 @@ package com.example.textanalysisapp.view;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 import javafx.scene.control.*;
@@ -65,7 +66,7 @@ public class HelloApplication extends Application {
         deleteBtn.setPrefSize(140, 40);
 
         // Add Sprint 2: Cancel button
-        cancelBtn = new Button("Cancel");
+        cancelBtn = new Button("Cancel Analysis");
         cancelBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;");
         cancelBtn.setPrefSize(140, 40);
         cancelBtn.setDisable(true);
@@ -79,13 +80,13 @@ public class HelloApplication extends Application {
 
         // Add Sprint 2: Progress bar
         progressBar = new ProgressBar(0);
-        progressBar.setPrefWidth(300);
+        progressBar.setPrefWidth(400);
         progressBar.setVisible(false);
-        progressBar.setStyle("-fx-accent: #967aa1;");
+        progressBar.setStyle("-fx-accent: #967aa1; -fx-pref-height: 20px;");
 
         // Add Sprint 2: Status label
-        statusLabel = new Label("Ready");
-        statusLabel.setStyle("-fx-text-fill: #192a51; -fx-font-size: 13px;");
+        statusLabel = new Label("Ready to analyze");
+        statusLabel.setStyle("-fx-text-fill: #192a51; -fx-font-size: 13px; -fx-font-weight: bold;");
 
         // Add Sprint 2: Progress box container
         progressBox = new VBox(10, progressBar, statusLabel);
@@ -96,24 +97,28 @@ public class HelloApplication extends Application {
         // Add Sprint 2: Results container
         resultsContainer = new VBox(10);
         resultsContainer.setPadding(new Insets(15));
-        resultsContainer.setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-border-radius: 10;");
+        resultsContainer.setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-border-radius: 10; -fx-border-width: 2;");
         resultsContainer.setVisible(false);
+        resultsContainer.setPrefHeight(250);
 
         // TableView
         TableView<FileInfo> table = new TableView<>();
         table.setStyle("-fx-control-inner-background: #f5e6e8; -fx-background-color: #f5e6e8;");
-        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE); // Single selection for Sprint 2
         ObservableList<FileInfo> masterData = FXCollections.observableArrayList();
 
         // Columns
         TableColumn<FileInfo, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameCol.setPrefWidth(150);
 
         TableColumn<FileInfo, Long> sizeCol = new TableColumn<>("Size (KB)");
         sizeCol.setCellValueFactory(new PropertyValueFactory<>("size"));
+        sizeCol.setPrefWidth(80);
 
         TableColumn<FileInfo, String> dateCol = new TableColumn<>("Last Modified");
         dateCol.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
+        dateCol.setPrefWidth(120);
 
         TableColumn<FileInfo, String> pathCol = new TableColumn<>("Path");
         pathCol.setCellValueFactory(new PropertyValueFactory<>("path"));
@@ -123,6 +128,9 @@ public class HelloApplication extends Application {
 
         // FileChooser
         FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text Files", "*.txt", "*.md", "*.java", "*.xml", "*.json", "*.csv")
+        );
 
         // Load Files
         loadBtn.setOnAction(e -> {
@@ -135,6 +143,21 @@ public class HelloApplication extends Application {
                             .format(file.lastModified());
                     masterData.add(new FileInfo(fileName, fileSize, lastModified, file.getAbsolutePath()));
                 }
+
+                // Show success message if files were loaded
+                if (!files.isEmpty()) {
+                    statusLabel.setText("Loaded " + files.size() + " file(s) successfully");
+                    progressBox.setVisible(true);
+                    new java.util.Timer().schedule(
+                            new java.util.TimerTask() {
+                                @Override
+                                public void run() {
+                                    javafx.application.Platform.runLater(() -> progressBox.setVisible(false));
+                                }
+                            },
+                            2000
+                    );
+                }
             }
         });
 
@@ -143,13 +166,24 @@ public class HelloApplication extends Application {
             ObservableList<FileInfo> selected = table.getSelectionModel().getSelectedItems();
             if (!selected.isEmpty()) {
                 masterData.removeAll(selected);
+                statusLabel.setText("Removed " + selected.size() + " file(s)");
+                progressBox.setVisible(true);
+                new java.util.Timer().schedule(
+                        new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                javafx.application.Platform.runLater(() -> progressBox.setVisible(false));
+                            }
+                        },
+                        1500
+                );
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING, "No file selected!");
                 alert.showAndWait();
             }
         });
 
-        // Add Sprint 2: Start Analysis with progress tracking
+        // Add Sprint 2: Start Analysis with progress tracking - FIXED VERSION
         startBtn.setOnAction(e -> {
             FileInfo selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
@@ -165,39 +199,71 @@ public class HelloApplication extends Application {
                 progressBar.setProgress(0);
                 statusLabel.setText("Analyzing: " + selected.getName() + "...");
 
-                // Create analysis task
+                // Hide previous results
+                resultsContainer.setVisible(false);
+
+                // Create analysis task - FIXED: Now calculates ALL statistics
                 Task<Map<String, Object>> task = new Task<Map<String, Object>>() {
                     @Override
                     protected Map<String, Object> call() throws Exception {
                         Map<String, Object> results = new HashMap<>();
                         File file = new File(selected.getPath());
 
+                        // Check if file exists
+                        if (!file.exists()) {
+                            throw new Exception("File not found: " + selected.getName());
+                        }
+
+                        // Check if file is empty
+                        if (file.length() == 0) {
+                            throw new Exception("File is empty: " + selected.getName());
+                        }
+
                         // Read file content
+                        updateProgress(10, 100);
+                        updateMessage("Reading file content...");
                         String content;
                         try {
                             content = new String(java.nio.file.Files.readAllBytes(file.toPath()));
                         } catch (Exception ex) {
-                            throw new Exception("Cannot read file: " + ex.getMessage());
+                            throw new Exception("Cannot read file. It might be binary or corrupted.");
                         }
 
-                        // Simulate progress
-                        for (int i = 0; i <= 100; i += 10) {
-                            updateProgress(i, 100);
-                            Thread.sleep(50);
+                        if (content.trim().isEmpty()) {
+                            throw new Exception("File contains only whitespace.");
                         }
 
-                        // Perform analysis
+                        // ================================================
+                        // PERFORM ALL ANALYSIS CALCULATIONS
+                        // ================================================
+
+                        // 1. Word count
+                        updateProgress(20, 100);
+                        updateMessage("Counting words...");
                         String[] words = content.split("\\s+");
                         int totalWords = words.length;
                         results.put("totalWords", totalWords);
 
+                        // 2. Unique words
+                        updateProgress(30, 100);
+                        updateMessage("Finding unique words...");
                         Set<String> uniqueWords = Arrays.stream(words)
-                                .map(String::toLowerCase)
+                                .map(word -> word.toLowerCase().replaceAll("[^a-zA-Z]", ""))
                                 .filter(word -> !word.isEmpty())
                                 .collect(Collectors.toSet());
                         results.put("uniqueWords", uniqueWords.size());
 
-                        // Find most frequent words
+                        // 3. Character counts
+                        updateProgress(40, 100);
+                        updateMessage("Counting characters...");
+                        int charsWithSpaces = content.length();
+                        int charsWithoutSpaces = content.replace(" ", "").length();
+                        results.put("charsWithSpaces", charsWithSpaces);
+                        results.put("charsWithoutSpaces", charsWithoutSpaces);
+
+                        // 4. Most frequent words
+                        updateProgress(50, 100);
+                        updateMessage("Analyzing word frequency...");
                         Map<String, Integer> wordFrequency = new HashMap<>();
                         for (String word : words) {
                             String cleanWord = word.toLowerCase().replaceAll("[^a-zA-Z]", "");
@@ -213,15 +279,70 @@ public class HelloApplication extends Application {
                                 .collect(Collectors.joining(", "));
                         results.put("mostFrequent", topWords.isEmpty() ? "No words found" : topWords);
 
+                        // 5. Reading time (200 words per minute)
+                        updateProgress(60, 100);
+                        updateMessage("Calculating reading time...");
+                        double readingTime = totalWords / 200.0;
+                        results.put("readingTime", String.format("%.1f", readingTime));
+
+                        // 6. Sentence count (simple approximation)
+                        updateProgress(70, 100);
+                        updateMessage("Counting sentences...");
+                        int sentenceCount = content.split("[.!?]+").length;
+                        results.put("sentenceCount", sentenceCount);
+
+                        // 7. Average word length
+                        updateProgress(80, 100);
+                        updateMessage("Calculating average word length...");
+                        double avgWordLength = words.length > 0 ?
+                                (double) charsWithoutSpaces / words.length : 0;
+                        results.put("avgWordLength", String.format("%.2f", avgWordLength));
+
+                        // 8. Basic sentiment analysis
+                        updateProgress(90, 100);
+                        updateMessage("Analyzing sentiment...");
+                        String sentiment = analyzeSentiment(content);
+                        results.put("sentiment", sentiment);
+
+                        // 9. File metadata
                         results.put("fileName", selected.getName());
                         results.put("fileSize", selected.getSize() + " KB");
 
+                        updateProgress(100, 100);
+                        updateMessage("Analysis complete!");
+
                         return results;
+                    }
+
+                    // Sentiment analysis helper method
+                    private String analyzeSentiment(String text) {
+                        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best", "nice", "awesome", "positive"};
+                        String[] negativeWords = {"bad", "terrible", "awful", "sad", "hate", "worst", "poor", "horrible", "negative"};
+
+                        text = text.toLowerCase();
+                        int positiveCount = 0;
+                        int negativeCount = 0;
+
+                        for (String word : positiveWords) {
+                            if (text.contains(word)) positiveCount++;
+                        }
+                        for (String word : negativeWords) {
+                            if (text.contains(word)) negativeCount++;
+                        }
+
+                        if (positiveCount > negativeCount) return "Positive";
+                        if (negativeCount > positiveCount) return "Negative";
+                        return "Neutral";
                     }
                 };
 
                 // Bind progress bar to task progress
                 progressBar.progressProperty().bind(task.progressProperty());
+
+                // Update status label with task messages
+                task.messageProperty().addListener((obs, oldMsg, newMsg) -> {
+                    statusLabel.setText(newMsg);
+                });
 
                 // Handle successful completion
                 task.setOnSucceeded(event -> {
@@ -229,10 +350,7 @@ public class HelloApplication extends Application {
                     displayResults(results);
 
                     // Reset UI
-                    startBtn.setDisable(false);
-                    loadBtn.setDisable(false);
-                    deleteBtn.setDisable(false);
-                    cancelBtn.setDisable(true);
+                    resetAnalysisUI();
                     statusLabel.setText("Analysis complete!");
 
                     // Hide progress after delay
@@ -240,7 +358,9 @@ public class HelloApplication extends Application {
                             new java.util.TimerTask() {
                                 @Override
                                 public void run() {
-                                    javafx.application.Platform.runLater(() -> progressBox.setVisible(false));
+                                    javafx.application.Platform.runLater(() -> {
+                                        progressBox.setVisible(false);
+                                    });
                                 }
                             },
                             1000
@@ -256,25 +376,17 @@ public class HelloApplication extends Application {
                     alert.setContentText(exception.getMessage());
                     alert.showAndWait();
 
-                    // Reset UI
-                    startBtn.setDisable(false);
-                    loadBtn.setDisable(false);
-                    deleteBtn.setDisable(false);
-                    cancelBtn.setDisable(true);
-                    progressBox.setVisible(false);
+                    resetAnalysisUI();
                     statusLabel.setText("Analysis failed");
                 });
 
                 // Cancel button action
-                cancelBtn.setOnAction(cancelEvent -> {
+                cancelBtn.setOnAction(event -> {
                     if (task.isRunning()) {
                         task.cancel();
-                        startBtn.setDisable(false);
-                        loadBtn.setDisable(false);
-                        deleteBtn.setDisable(false);
-                        cancelBtn.setDisable(true);
-                        progressBox.setVisible(false);
+                        resetAnalysisUI();
                         statusLabel.setText("Analysis cancelled");
+                        progressBox.setVisible(false);
                     }
                 });
 
@@ -282,7 +394,7 @@ public class HelloApplication extends Application {
                 new Thread(task).start();
 
             } else {
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select a file first!");
+                Alert alert = new Alert(Alert.AlertType.WARNING, "Please select a file to analyze first!");
                 alert.showAndWait();
             }
         });
@@ -336,34 +448,198 @@ public class HelloApplication extends Application {
         );
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        Scene scene = new Scene(layout, 900, 600);
+        Scene scene = new Scene(layout, 1000, 700);
         loadExternalCSS(scene);
 
-        primaryStage.setTitle("VioletLens - Text Analyzer");
+        primaryStage.setTitle("VioletLens - Text Analyzer (Sprint 2)");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    // Add Sprint 2: Method to display results
+    /**
+     * Reset UI after analysis (success, failure, or cancellation)
+     */
+    private void resetAnalysisUI() {
+        // Find buttons by looking at parent
+        VBox layout = (VBox) progressBox.getParent();
+        HBox buttonsBox = (HBox) layout.getChildren().get(3); // 4th element is buttonsBox
+
+        for (javafx.scene.Node node : buttonsBox.getChildren()) {
+            if (node instanceof Button) {
+                Button btn = (Button) node;
+                String text = btn.getText();
+                if (text.equals("Start Analysis") || text.equals("Load Files") || text.equals("Delete Selected")) {
+                    btn.setDisable(false);
+                } else if (text.equals("Cancel Analysis")) {
+                    btn.setDisable(true);
+                }
+            }
+        }
+
+        progressBar.setVisible(false);
+    }
+
+    /**
+     * Display analysis results in the results container
+     */
     private void displayResults(Map<String, Object> results) {
         resultsContainer.getChildren().clear();
 
         // Title
         Label titleLabel = new Label("Analysis Results: " + results.get("fileName"));
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
 
-        // Statistics
-        Label statsLabel = new Label(
-                "Total Words: " + results.get("totalWords") + "\n" +
-                        "Unique Words: " + results.get("uniqueWords") + "\n" +
-                        "File Size: " + results.get("fileSize") + "\n" +
-                        "Most Frequent: " + results.get("mostFrequent")
-        );
-        statsLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #192a51;");
-        statsLabel.setPadding(new Insets(10));
+        // Create a grid for statistics
+        GridPane statsGrid = new GridPane();
+        statsGrid.setHgap(20);
+        statsGrid.setVgap(10);
+        statsGrid.setPadding(new Insets(15));
+        statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 8;");
 
-        resultsContainer.getChildren().addAll(titleLabel, statsLabel);
+        // Add ALL statistics to the grid
+        int row = 0;
+
+        // Total Words
+        if (results.containsKey("totalWords")) {
+            addStatRow(statsGrid, row++, "Total Words:", results.get("totalWords").toString());
+        }
+
+        // Unique Words
+        if (results.containsKey("uniqueWords")) {
+            addStatRow(statsGrid, row++, "Unique Words:", results.get("uniqueWords").toString());
+        }
+
+        // Character Count (with spaces)
+        if (results.containsKey("charsWithSpaces")) {
+            addStatRow(statsGrid, row++, "Characters (with spaces):", results.get("charsWithSpaces").toString());
+        }
+
+        // Character Count (without spaces)
+        if (results.containsKey("charsWithoutSpaces")) {
+            addStatRow(statsGrid, row++, "Characters (no spaces):", results.get("charsWithoutSpaces").toString());
+        }
+
+        // Sentence Count
+        if (results.containsKey("sentenceCount")) {
+            addStatRow(statsGrid, row++, "Sentences:", results.get("sentenceCount").toString());
+        }
+
+        // Reading Time
+        if (results.containsKey("readingTime")) {
+            addStatRow(statsGrid, row++, "Reading Time:", results.get("readingTime") + " minutes");
+        }
+
+        // Sentiment
+        if (results.containsKey("sentiment")) {
+            addStatRow(statsGrid, row++, "Sentiment:", results.get("sentiment").toString());
+        }
+
+        // Average Word Length
+        if (results.containsKey("avgWordLength")) {
+            addStatRow(statsGrid, row++, "Avg. Word Length:", results.get("avgWordLength").toString());
+        }
+
+        // File Size
+        if (results.containsKey("fileSize")) {
+            addStatRow(statsGrid, row++, "File Size:", results.get("fileSize").toString());
+        }
+
+        // Most Frequent Words Section
+        if (results.containsKey("mostFrequent")) {
+            Label freqTitle = new Label("Most Frequent Words:");
+            freqTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #192a51; -fx-padding: 10 0 5 0;");
+
+            TextArea freqArea = new TextArea(results.get("mostFrequent").toString());
+            freqArea.setEditable(false);
+            freqArea.setWrapText(true);
+            freqArea.setPrefHeight(80);
+            freqArea.setStyle("-fx-control-inner-background: white; -fx-border-color: #d5c6e0;");
+
+            // Export button
+            Button exportBtn = new Button("Export Results");
+            exportBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
+            exportBtn.setOnAction(e -> exportResults(results));
+
+            HBox buttonBox = new HBox(exportBtn);
+            buttonBox.setAlignment(Pos.CENTER_RIGHT);
+            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+            resultsContainer.getChildren().addAll(
+                    titleLabel,
+                    statsGrid,
+                    freqTitle,
+                    freqArea,
+                    buttonBox
+            );
+        } else {
+            // If no frequency data, just show basic stats
+            resultsContainer.getChildren().addAll(titleLabel, statsGrid);
+        }
+
         resultsContainer.setVisible(true);
+    }
+
+    /**
+     * Export results to a text file
+     */
+    private void exportResults(Map<String, Object> results) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Analysis Results");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text Files", "*.txt")
+        );
+        fileChooser.setInitialFileName("analysis_results_" + results.get("fileName") + ".txt");
+
+        File file = fileChooser.showSaveDialog(null);
+        if (file != null) {
+            try {
+                StringBuilder content = new StringBuilder();
+                content.append("=== Text Analysis Results ===\n");
+                content.append("File: ").append(results.get("fileName")).append("\n\n");
+
+                content.append("Statistics:\n");
+                content.append("- Total Words: ").append(results.get("totalWords")).append("\n");
+                content.append("- Unique Words: ").append(results.get("uniqueWords")).append("\n");
+                content.append("- Characters (with spaces): ").append(results.get("charsWithSpaces")).append("\n");
+                content.append("- Characters (no spaces): ").append(results.get("charsWithoutSpaces")).append("\n");
+                content.append("- Sentences: ").append(results.get("sentenceCount")).append("\n");
+                content.append("- Reading Time: ").append(results.get("readingTime")).append(" minutes\n");
+                content.append("- Average Word Length: ").append(results.get("avgWordLength")).append("\n");
+                content.append("- Sentiment: ").append(results.get("sentiment")).append("\n");
+                content.append("- File Size: ").append(results.get("fileSize")).append("\n\n");
+
+                content.append("Most Frequent Words:\n");
+                content.append(results.get("mostFrequent")).append("\n");
+
+                java.nio.file.Files.write(file.toPath(), content.toString().getBytes());
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Export Successful");
+                alert.setHeaderText("Results exported successfully!");
+                alert.setContentText("Saved to: " + file.getAbsolutePath());
+                alert.showAndWait();
+
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Export Error");
+                alert.setHeaderText("Failed to export results");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
+            }
+        }
+    }
+
+    /**
+     * Add a row to the statistics grid
+     */
+    private void addStatRow(GridPane grid, int row, String label, String value) {
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #192a51; -fx-min-width: 150;");
+        Label val = new Label(value);
+        val.setStyle("-fx-text-fill: #333;");
+
+        grid.add(lbl, 0, row);
+        grid.add(val, 1, row);
     }
 
     // Rest of your existing methods remain unchanged...

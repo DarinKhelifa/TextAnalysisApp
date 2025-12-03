@@ -3,9 +3,9 @@ package com.example.textanalysisapp.controller;
 import com.example.textanalysisapp.model.AnalysisResult;
 import com.example.textanalysisapp.model.TextFile;
 import javafx.scene.control.*;
+import javafx.concurrent.Task; // ADD THIS IMPORT
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.EventHandler;
-
 
 public class UIController {
 
