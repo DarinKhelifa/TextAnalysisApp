@@ -38,12 +38,17 @@ public class HelloApplication extends Application {
     // Add these fields for Sprint 2
     private ProgressBar progressBar;
     private Button cancelBtn;
+    private Button startBtn;
     private Label statusLabel;
     private VBox resultsContainer;
     private VBox progressBox;
     private AnalysisManager analysisManager;
     private TableView<FileInfo> table;
     private ObservableList<FileInfo> masterData;
+
+    // إضافة Task للتحكم في عملية التحليل
+    private Task<Map<String, Object>> currentTask;
+    private Thread currentThread;
 
     @Override
     public void start(Stage primaryStage) {
@@ -64,7 +69,7 @@ public class HelloApplication extends Application {
         loadBtn.setStyle("-fx-background-color: #d5c6e0; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;");
         loadBtn.setPrefSize(140, 40);
 
-        Button startBtn = new Button("Start Analysis");
+        startBtn = new Button("Start Analysis");  // جعله متغير instance
         startBtn.setStyle("-fx-background-color: #aaa1c8; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;");
         startBtn.setPrefSize(140, 40);
 
@@ -82,8 +87,22 @@ public class HelloApplication extends Application {
         setupButtonHoverEffects(loadBtn, startBtn, deleteBtn);
 
         // Add hover effect for cancel button
-        cancelBtn.setOnMouseEntered(e -> cancelBtn.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; -fx-cursor: hand;"));
-        cancelBtn.setOnMouseExited(e -> cancelBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;"));
+        cancelBtn.setOnMouseEntered(e -> {
+            if (!cancelBtn.isDisable()) {
+                cancelBtn.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8; -fx-cursor: hand;");
+            }
+        });
+        cancelBtn.setOnMouseExited(e -> {
+            if (!cancelBtn.isDisable()) {
+                cancelBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 8; -fx-border-radius: 8;");
+            }
+        });
+
+        // حدث زر Cancel - يعمل أثناء وبعد التحليل
+        cancelBtn.setOnAction(e -> {
+            System.out.println("Cancel button clicked!");
+            handleCancelAction();
+        });
 
         // Add Sprint 2: Progress bar
         progressBar = new ProgressBar(0);
@@ -159,7 +178,10 @@ public class HelloApplication extends Application {
                             new java.util.TimerTask() {
                                 @Override
                                 public void run() {
-                                    javafx.application.Platform.runLater(() -> progressBox.setVisible(false));
+                                    javafx.application.Platform.runLater(() -> {
+                                        progressBox.setVisible(false);
+                                        statusLabel.setText("Ready to analyze");
+                                    });
                                 }
                             },
                             2000
@@ -179,7 +201,10 @@ public class HelloApplication extends Application {
                         new java.util.TimerTask() {
                             @Override
                             public void run() {
-                                javafx.application.Platform.runLater(() -> progressBox.setVisible(false));
+                                javafx.application.Platform.runLater(() -> {
+                                    progressBox.setVisible(false);
+                                    statusLabel.setText("Ready to analyze");
+                                });
                             }
                         },
                         1500
@@ -190,7 +215,7 @@ public class HelloApplication extends Application {
             }
         });
 
-        // Add Sprint 2: Start Analysis with progress tracking - CLEAN VERSION
+        // Add Sprint 2: Start Analysis with progress tracking
         startBtn.setOnAction(e -> {
             FileInfo selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
@@ -201,38 +226,62 @@ public class HelloApplication extends Application {
                     return;
                 }
 
-                // Hide previous results
+                // إخفاء النتائج السابقة إن وجدت
                 resultsContainer.setVisible(false);
+                resultsContainer.getChildren().clear();
 
-                // Create and start analysis task using AnalysisManager
-                Task<Map<String, Object>> task = analysisManager.createAnalysisTask(
-                        file, startBtn, cancelBtn, progressBar, statusLabel
-                );
+                // تعطيل زر Start وتمكين Cancel
+                startBtn.setDisable(true);
+                cancelBtn.setDisable(false);
 
-                // Setup task handlers with callback for results
-                analysisManager.setupTaskHandlers(
-                        task, startBtn, cancelBtn, progressBar, statusLabel,
-                        new AnalysisManager.AnalysisResultCallback() {
-                            @Override
-                            public void onAnalysisComplete(Map<String, Object> results) {
-                                displayResults(results);
-                                statusLabel.setText("Analysis complete!");
-                            }
+                // إظهار التقدم
+                progressBox.setVisible(true);
+                progressBar.setProgress(0);
+                statusLabel.setText("Starting analysis...");
+                progressBar.setVisible(true);
 
-                            @Override
-                            public void onAnalysisFailed(String errorMessage) {
-                                statusLabel.setText("Analysis failed");
-                            }
+                // إنشاء Task جديد للتحليل (سريع بدون تأخير)
+                currentTask = createAnalysisTask(file, selected.getName());
 
-                            @Override
-                            public void onAnalysisCancelled() {
-                                statusLabel.setText("Analysis cancelled");
-                            }
+                // ربط الـ ProgressBar مع الـ Task
+                progressBar.progressProperty().bind(currentTask.progressProperty());
+
+                // التعامل مع نجاح التحليل
+                currentTask.setOnSucceeded(event -> {
+                    try {
+                        Map<String, Object> results = currentTask.getValue();
+                        if (results != null) {
+                            displayResults(results);
+                            statusLabel.setText("Analysis complete!");
+                            // بعد التحليل، نترك Cancel يعمل لإخفاء النتائج
+                            cancelBtn.setDisable(false);
                         }
-                );
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error processing results");
+                        showAlert("Error", "Failed to process results: " + ex.getMessage());
+                        resetUIAfterAnalysis();
+                    }
+                });
 
-                // Start the task
-                new Thread(task).start();
+                // التعامل مع فشل التحليل
+                currentTask.setOnFailed(event -> {
+                    Throwable exception = currentTask.getException();
+                    statusLabel.setText("Analysis failed");
+                    showAlert("Analysis Failed",
+                            "Could not analyze the file:\n" + exception.getMessage());
+                    resetUIAfterAnalysis();
+                });
+
+                // التعامل مع إلغاء التحليل
+                currentTask.setOnCancelled(event -> {
+                    statusLabel.setText("Analysis cancelled");
+                    resetUIAfterAnalysis();
+                });
+
+                // بدء الـ Task في thread جديد
+                currentThread = new Thread(currentTask);
+                currentThread.setDaemon(true);
+                currentThread.start();
 
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING, "Please select a file to analyze first!");
@@ -298,103 +347,359 @@ public class HelloApplication extends Application {
     }
 
     /**
+     * التعامل مع حدث زر Cancel
+     */
+    private void handleCancelAction() {
+        // الحالة 1: إذا كان هناك تحليل جاري
+        if (currentTask != null && currentTask.isRunning()) {
+            System.out.println("Cancelling current analysis task...");
+            currentTask.cancel(true);
+
+            if (currentThread != null && currentThread.isAlive()) {
+                currentThread.interrupt();
+            }
+
+            statusLabel.setText("Cancelling analysis...");
+        }
+        // الحالة 2: إذا كانت النتائج معروضة
+        else if (resultsContainer.isVisible()) {
+            System.out.println("Hiding analysis results...");
+            hideResultsAndResetUI();
+        }
+        // الحالة 3: إذا لم يكن هناك شيء نشط
+        else {
+            System.out.println("Nothing to cancel");
+            // نعطل الزر لأنه لا شيء لفعله
+            cancelBtn.setDisable(true);
+        }
+    }
+
+    /**
+     * إنشاء Task للتحليل السريع
+     */
+    private Task<Map<String, Object>> createAnalysisTask(File file, String fileName) {
+        return new Task<>() {
+            @Override
+            protected Map<String, Object> call() throws Exception {
+                try {
+                    updateProgress(0.1, 1.0);
+
+                    // التحقق من الإلغاء
+                    if (isCancelled()) return null;
+
+                    // قراءة الملف
+                    String content = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+
+                    if (isCancelled()) return null;
+                    updateProgress(0.3, 1.0);
+
+                    // تقسيم النص إلى كلمات
+                    String[] words = content.split("\\s+");
+                    int totalWords = words.length;
+
+                    if (isCancelled()) return null;
+                    updateProgress(0.5, 1.0);
+
+                    // حساب الكلمات الفريدة
+                    Set<String> uniqueWords = new HashSet<>();
+                    for (String word : words) {
+                        if (!word.trim().isEmpty()) {
+                            uniqueWords.add(word.toLowerCase());
+                        }
+                    }
+                    int uniqueCount = uniqueWords.size();
+
+                    if (isCancelled()) return null;
+                    updateProgress(0.7, 1.0);
+
+                    // حساب تكرار الكلمات
+                    Map<String, Integer> wordFrequency = new HashMap<>();
+                    for (String word : words) {
+                        word = word.toLowerCase().replaceAll("[^a-zA-Z]", "");
+                        if (!word.isEmpty()) {
+                            wordFrequency.put(word, wordFrequency.getOrDefault(word, 0) + 1);
+                        }
+                    }
+
+                    // ترتيب الكلمات الأكثر تكراراً
+                    List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(wordFrequency.entrySet());
+                    sortedEntries.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+                    if (isCancelled()) return null;
+                    updateProgress(0.9, 1.0);
+
+                    // بناء نص الكلمات المتكررة
+                    StringBuilder frequentWords = new StringBuilder();
+                    int limit = Math.min(10, sortedEntries.size());
+                    for (int i = 0; i < limit; i++) {
+                        Map.Entry<String, Integer> entry = sortedEntries.get(i);
+                        frequentWords.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                    }
+
+                    // حساب إحصائيات إضافية
+                    int charsWithSpaces = content.length();
+                    int charsWithoutSpaces = content.replaceAll("\\s", "").length();
+                    int sentenceCount = content.split("[.!?]+").length;
+                    double readingTime = totalWords / 200.0; // 200 كلمة في الدقيقة
+                    String sentiment = calculateSentiment(content);
+                    double avgWordLength = calculateAverageWordLength(content);
+
+                    if (isCancelled()) return null;
+                    updateProgress(1.0, 1.0);
+
+                    // إنشاء النتائج
+                    Map<String, Object> results = new HashMap<>();
+                    results.put("fileName", fileName);
+                    results.put("totalWords", totalWords);
+                    results.put("uniqueWords", uniqueCount);
+                    results.put("charsWithSpaces", charsWithSpaces);
+                    results.put("charsWithoutSpaces", charsWithoutSpaces);
+                    results.put("sentenceCount", sentenceCount);
+                    results.put("readingTime", String.format("%.1f", readingTime));
+                    results.put("sentiment", sentiment);
+                    results.put("avgWordLength", String.format("%.1f", avgWordLength));
+                    results.put("fileSize", file.length() / 1024 + " KB");
+                    results.put("mostFrequent", frequentWords.toString());
+
+                    return results;
+
+                } catch (Exception e) {
+                    throw new Exception("Error analyzing file: " + e.getMessage());
+                }
+            }
+        };
+    }
+
+    /**
+     * حساب المشاعر (تبسيطي)
+     */
+    private String calculateSentiment(String text) {
+        text = text.toLowerCase();
+        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best", "nice", "perfect", "wonderful", "awesome"};
+        String[] negativeWords = {"bad", "poor", "terrible", "sad", "hate", "worst", "awful", "horrible", "dislike", "angry"};
+
+        int positive = countOccurrences(text, positiveWords);
+        int negative = countOccurrences(text, negativeWords);
+
+        if (positive > negative) return "Positive";
+        else if (negative > positive) return "Negative";
+        else return "Neutral";
+    }
+
+    /**
+     * حساب متوسط طول الكلمات
+     */
+    private double calculateAverageWordLength(String text) {
+        String[] words = text.split("\\s+");
+        if (words.length == 0) return 0;
+
+        int totalChars = 0;
+        for (String word : words) {
+            totalChars += word.replaceAll("[^a-zA-Z]", "").length();
+        }
+        return (double) totalChars / words.length;
+    }
+
+    /**
+     * عد تكرار الكلمات في النص
+     */
+    private int countOccurrences(String text, String[] words) {
+        int count = 0;
+        for (String word : words) {
+            int index = 0;
+            while ((index = text.indexOf(word, index)) != -1) {
+                count++;
+                index += word.length();
+            }
+        }
+        return count;
+    }
+
+    /**
+     * إخفاء النتائج وإعادة تعيين الواجهة
+     */
+    private void hideResultsAndResetUI() {
+        javafx.application.Platform.runLater(() -> {
+            // إخفاء النتائج
+            resultsContainer.setVisible(false);
+            resultsContainer.getChildren().clear();
+
+            // إعادة تعيين الأزرار
+            startBtn.setDisable(false);
+            cancelBtn.setDisable(true); // نعطله لأنه لا حاجة له الآن
+
+            // إعادة تعيين التقدم
+            progressBar.progressProperty().unbind();
+            progressBar.setVisible(false);
+            progressBox.setVisible(false);
+
+            // إعادة تعيين الرسالة
+            statusLabel.setText("Ready to analyze");
+
+            // تنظيف المتغيرات
+            currentTask = null;
+            currentThread = null;
+
+            System.out.println("Results hidden and UI reset to initial state");
+        });
+    }
+
+    /**
+     * إعادة تعيين واجهة المستخدم بعد التحليل
+     */
+    private void resetUIAfterAnalysis() {
+        javafx.application.Platform.runLater(() -> {
+            startBtn.setDisable(false);
+            cancelBtn.setDisable(false); // نتركه يعمل لإخفاء النتائج
+
+            progressBar.progressProperty().unbind();
+            progressBar.setVisible(false);
+            progressBox.setVisible(false);
+
+            // إخفاء statusLabel بعد 3 ثواني
+            new java.util.Timer().schedule(
+                    new java.util.TimerTask() {
+                        @Override
+                        public void run() {
+                            javafx.application.Platform.runLater(() -> {
+                                if (!resultsContainer.isVisible()) {
+                                    statusLabel.setText("Ready to analyze");
+                                }
+                            });
+                        }
+                    },
+                    3000
+            );
+
+            currentTask = null;
+            currentThread = null;
+        });
+    }
+
+    /**
+     * عرض رسالة تنبيه
+     */
+    private void showAlert(String title, String message) {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    /**
      * Display analysis results in the results container
      */
     private void displayResults(Map<String, Object> results) {
-        resultsContainer.getChildren().clear();
+        javafx.application.Platform.runLater(() -> {
+            resultsContainer.getChildren().clear();
 
-        // Title
-        Label titleLabel = new Label("Analysis Results: " + results.get("fileName"));
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
+            // Title with close button
+            Label titleLabel = new Label("Analysis Results: " + results.get("fileName"));
+            titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
 
-        // Create a grid for statistics
-        GridPane statsGrid = new GridPane();
-        statsGrid.setHgap(20);
-        statsGrid.setVgap(10);
-        statsGrid.setPadding(new Insets(15));
-        statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 8;");
+            // زر إغلاق النتائج
+            Button closeResultsBtn = new Button("✕ Close");
+            closeResultsBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10 5 10; -fx-background-radius: 5;");
+            closeResultsBtn.setOnAction(e -> hideResultsAndResetUI());
+            closeResultsBtn.setTooltip(new Tooltip("Close results panel"));
 
-        // Add ALL statistics to the grid
-        int row = 0;
+            HBox titleBox = new HBox(titleLabel, closeResultsBtn);
+            titleBox.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(titleLabel, Priority.ALWAYS);
+            closeResultsBtn.setAlignment(Pos.CENTER_RIGHT);
 
-        // Total Words
-        if (results.containsKey("totalWords")) {
-            addStatRow(statsGrid, row++, "Total Words:", results.get("totalWords").toString());
-        }
+            // Create a grid for statistics
+            GridPane statsGrid = new GridPane();
+            statsGrid.setHgap(20);
+            statsGrid.setVgap(10);
+            statsGrid.setPadding(new Insets(15));
+            statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 8;");
 
-        // Unique Words
-        if (results.containsKey("uniqueWords")) {
-            addStatRow(statsGrid, row++, "Unique Words:", results.get("uniqueWords").toString());
-        }
+            // Add ALL statistics to the grid
+            int row = 0;
 
-        // Character Count (with spaces)
-        if (results.containsKey("charsWithSpaces")) {
-            addStatRow(statsGrid, row++, "Characters (with spaces):", results.get("charsWithSpaces").toString());
-        }
+            // Total Words
+            if (results.containsKey("totalWords")) {
+                addStatRow(statsGrid, row++, "Total Words:", results.get("totalWords").toString());
+            }
 
-        // Character Count (without spaces)
-        if (results.containsKey("charsWithoutSpaces")) {
-            addStatRow(statsGrid, row++, "Characters (no spaces):", results.get("charsWithoutSpaces").toString());
-        }
+            // Unique Words
+            if (results.containsKey("uniqueWords")) {
+                addStatRow(statsGrid, row++, "Unique Words:", results.get("uniqueWords").toString());
+            }
 
-        // Sentence Count
-        if (results.containsKey("sentenceCount")) {
-            addStatRow(statsGrid, row++, "Sentences:", results.get("sentenceCount").toString());
-        }
+            // Character Count (with spaces)
+            if (results.containsKey("charsWithSpaces")) {
+                addStatRow(statsGrid, row++, "Characters (with spaces):", results.get("charsWithSpaces").toString());
+            }
 
-        // Reading Time
-        if (results.containsKey("readingTime")) {
-            addStatRow(statsGrid, row++, "Reading Time:", results.get("readingTime") + " minutes");
-        }
+            // Character Count (without spaces)
+            if (results.containsKey("charsWithoutSpaces")) {
+                addStatRow(statsGrid, row++, "Characters (no spaces):", results.get("charsWithoutSpaces").toString());
+            }
 
-        // Sentiment
-        if (results.containsKey("sentiment")) {
-            addStatRow(statsGrid, row++, "Sentiment:", results.get("sentiment").toString());
-        }
+            // Sentence Count
+            if (results.containsKey("sentenceCount")) {
+                addStatRow(statsGrid, row++, "Sentences:", results.get("sentenceCount").toString());
+            }
 
-        // Average Word Length
-        if (results.containsKey("avgWordLength")) {
-            addStatRow(statsGrid, row++, "Avg. Word Length:", results.get("avgWordLength").toString());
-        }
+            // Reading Time
+            if (results.containsKey("readingTime")) {
+                addStatRow(statsGrid, row++, "Reading Time:", results.get("readingTime") + " minutes");
+            }
 
-        // File Size
-        if (results.containsKey("fileSize")) {
-            addStatRow(statsGrid, row++, "File Size:", results.get("fileSize").toString());
-        }
+            // Sentiment
+            if (results.containsKey("sentiment")) {
+                addStatRow(statsGrid, row++, "Sentiment:", results.get("sentiment").toString());
+            }
 
-        // Most Frequent Words Section
-        if (results.containsKey("mostFrequent")) {
-            Label freqTitle = new Label("Most Frequent Words:");
-            freqTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #192a51; -fx-padding: 10 0 5 0;");
+            // Average Word Length
+            if (results.containsKey("avgWordLength")) {
+                addStatRow(statsGrid, row++, "Avg. Word Length:", results.get("avgWordLength").toString());
+            }
 
-            TextArea freqArea = new TextArea(results.get("mostFrequent").toString());
-            freqArea.setEditable(false);
-            freqArea.setWrapText(true);
-            freqArea.setPrefHeight(80);
-            freqArea.setStyle("-fx-control-inner-background: white; -fx-border-color: #d5c6e0;");
+            // File Size
+            if (results.containsKey("fileSize")) {
+                addStatRow(statsGrid, row++, "File Size:", results.get("fileSize").toString());
+            }
 
-            // Export button
-            Button exportBtn = new Button("Export Results");
-            exportBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
-            exportBtn.setOnAction(e -> exportResults(results));
+            // Most Frequent Words Section
+            if (results.containsKey("mostFrequent")) {
+                Label freqTitle = new Label("Most Frequent Words:");
+                freqTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #192a51; -fx-padding: 10 0 5 0;");
 
-            HBox buttonBox = new HBox(exportBtn);
-            buttonBox.setAlignment(Pos.CENTER_RIGHT);
-            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+                TextArea freqArea = new TextArea(results.get("mostFrequent").toString());
+                freqArea.setEditable(false);
+                freqArea.setWrapText(true);
+                freqArea.setPrefHeight(80);
+                freqArea.setStyle("-fx-control-inner-background: white; -fx-border-color: #d5c6e0;");
 
-            resultsContainer.getChildren().addAll(
-                    titleLabel,
-                    statsGrid,
-                    freqTitle,
-                    freqArea,
-                    buttonBox
-            );
-        } else {
-            // If no frequency data, just show basic stats
-            resultsContainer.getChildren().addAll(titleLabel, statsGrid);
-        }
+                // Export button
+                Button exportBtn = new Button("Export Results");
+                exportBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15;");
+                exportBtn.setOnAction(e -> exportResults(results));
 
-        resultsContainer.setVisible(true);
+                HBox buttonBox = new HBox(10, exportBtn);
+                buttonBox.setAlignment(Pos.CENTER_RIGHT);
+                buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+                resultsContainer.getChildren().addAll(
+                        titleBox,
+                        statsGrid,
+                        freqTitle,
+                        freqArea,
+                        buttonBox
+                );
+            } else {
+                // If no frequency data, just show basic stats
+                resultsContainer.getChildren().addAll(titleBox, statsGrid);
+            }
+
+            resultsContainer.setVisible(true);
+        });
     }
 
     /**
