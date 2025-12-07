@@ -18,7 +18,7 @@ public class AnalysisManager {
     }
 
     /**
-     * Create and configure an analysis task
+     * Create and configure an analysis task with better progress updates
      */
     public Task<Map<String, Object>> createAnalysisTask(File file,
                                                         Button startBtn,
@@ -29,12 +29,15 @@ public class AnalysisManager {
         return new Task<Map<String, Object>>() {
             @Override
             protected Map<String, Object> call() throws Exception {
+                updateProgress(5, 100);
+                updateMessage("Initializing analysis...");
+
                 // Update UI state
                 javafx.application.Platform.runLater(() -> {
                     startBtn.setDisable(true);
                     cancelBtn.setDisable(false);
                     progressBar.setVisible(true);
-                    progressBar.setProgress(0);
+                    progressBar.setProgress(0.05);
                     statusLabel.setText("Analyzing: " + file.getName() + "...");
                 });
 
@@ -47,7 +50,7 @@ public class AnalysisManager {
                 }
 
                 // Read file content with progress
-                updateProgress(10, 100);
+                updateProgress(15, 100);
                 updateMessage("Reading file...");
                 String content = FileController.readFileContent(file);
 
@@ -55,16 +58,23 @@ public class AnalysisManager {
                     throw new Exception("File contains only whitespace.");
                 }
 
+                // Store content for preview
+                updateProgress(25, 100);
+                updateMessage("Preprocessing content...");
+
                 // Perform analysis with progress updates
-                updateProgress(30, 100);
-                updateMessage("Analyzing text...");
+                updateProgress(35, 100);
+                updateMessage("Counting words and characters...");
 
                 Map<String, Object> results = textAnalyzer.analyzeText(content);
 
                 // Add file metadata
+                updateProgress(85, 100);
+                updateMessage("Finalizing results...");
                 results.put("fileName", file.getName());
                 results.put("fileSize", file.length() / 1024 + " KB");
                 results.put("filePath", file.getAbsolutePath());
+                results.put("fileContent", content); // Store content for preview
 
                 updateProgress(100, 100);
                 updateMessage("Analysis complete!");
@@ -126,10 +136,12 @@ public class AnalysisManager {
      * Reset UI to initial state
      */
     private void resetUI(Button startBtn, Button cancelBtn, ProgressBar progressBar) {
-        startBtn.setDisable(false);
-        cancelBtn.setDisable(true);
-        progressBar.setVisible(false);
-        progressBar.progressProperty().unbind();
+        javafx.application.Platform.runLater(() -> {
+            startBtn.setDisable(false);
+            cancelBtn.setDisable(true);
+            progressBar.setVisible(false);
+            progressBar.progressProperty().unbind();
+        });
     }
 
     /**
