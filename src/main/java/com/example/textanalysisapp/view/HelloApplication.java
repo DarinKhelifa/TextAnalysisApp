@@ -61,7 +61,16 @@ public class HelloApplication extends Application {
     private Timeline progressAnimation;
     private List<String> currentTopWords = new ArrayList<>();
 
-    private ScrollPane mainScrollPane; // For better responsiveness
+    private ScrollPane mainScrollPane;
+    private HBox buttonContainer;
+    private VBox verticalButtonBox;
+    private VBox mainContent;
+
+    // Vertical layout buttons as class fields
+    private Button startBtnV;
+    private Button cancelBtnV;
+    private Button loadBtnV;
+    private Button deleteBtnV;
 
     @Override
     public void start(Stage primaryStage) {
@@ -77,9 +86,9 @@ public class HelloApplication extends Application {
             root.setTop(headerBox);
 
             // Create main content area with ScrollPane for responsiveness
-            VBox mainContent = new VBox();
+            mainContent = new VBox();
             mainContent.setPadding(new Insets(20));
-            mainContent.setSpacing(20);
+            mainContent.setSpacing(0);
             mainContent.setStyle("-fx-background-color: #f5e6e8;");
 
             mainScrollPane = new ScrollPane(mainContent);
@@ -93,6 +102,8 @@ public class HelloApplication extends Application {
             descriptionLabel.setAlignment(Pos.CENTER);
             descriptionLabel.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(descriptionLabel, Priority.ALWAYS);
+
+            VBox.setMargin(descriptionLabel, new Insets(0, 0, 20, 0));
 
             // Search field
             TextField searchField = new TextField();
@@ -113,26 +124,24 @@ public class HelloApplication extends Application {
             searchBox.setSpacing(10);
             HBox.setHgrow(searchBox, Priority.ALWAYS);
 
+            VBox.setMargin(searchBox, new Insets(0, 0, 20, 0));
+
             // Buttons - Create a responsive button container
             Button loadBtn = new Button("📁 Load Files");
             loadBtn.setStyle("-fx-background-color: #d5c6e0; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
-            loadBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(loadBtn, Priority.ALWAYS);
+            loadBtn.setMinWidth(130);
 
             startBtn = new Button("▶ Start Analysis");
             startBtn.setStyle("-fx-background-color: #aaa1c8; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
-            startBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(startBtn, Priority.ALWAYS);
+            startBtn.setMinWidth(130);
 
             Button deleteBtn = new Button("🗑️ Delete");
             deleteBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
-            deleteBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(deleteBtn, Priority.ALWAYS);
+            deleteBtn.setMinWidth(130);
 
             cancelBtn = new Button("✕ Cancel");
             cancelBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
-            cancelBtn.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(cancelBtn, Priority.ALWAYS);
+            cancelBtn.setMinWidth(130);
             cancelBtn.setDisable(true);
 
             // Add hover effects
@@ -150,26 +159,54 @@ public class HelloApplication extends Application {
 
             cancelBtn.setOnAction(e -> handleCancelAction());
 
-            // Button container - Responsive grid layout
-            GridPane buttonGrid = new GridPane();
-            buttonGrid.setHgap(15);
-            buttonGrid.setVgap(10);
-            buttonGrid.setPadding(new Insets(10, 0, 20, 0));
-            buttonGrid.setAlignment(Pos.CENTER);
+            // Button container - HBox for horizontal layout
+            buttonContainer = new HBox(15);
+            buttonContainer.setAlignment(Pos.CENTER);
+            buttonContainer.setPadding(new Insets(0, 0, 20, 0));
+            buttonContainer.getChildren().addAll(loadBtn, startBtn, deleteBtn, cancelBtn);
 
-            // Add buttons to grid
-            buttonGrid.add(loadBtn, 0, 0);
-            buttonGrid.add(startBtn, 1, 0);
-            buttonGrid.add(deleteBtn, 2, 0);
-            buttonGrid.add(cancelBtn, 3, 0);
+            // Create vertical button box for small screens
+            verticalButtonBox = new VBox(10);
+            verticalButtonBox.setAlignment(Pos.CENTER);
+            verticalButtonBox.setPadding(new Insets(0, 0, 20, 0));
+            verticalButtonBox.setVisible(false);
 
-            // Make columns equal width
-            for (int i = 0; i < 4; i++) {
-                ColumnConstraints col = new ColumnConstraints();
-                col.setPercentWidth(25);
-                col.setHgrow(Priority.ALWAYS);
-                buttonGrid.getColumnConstraints().add(col);
-            }
+            // Vertical layout buttons
+            loadBtnV = new Button("📁 Load Files");
+            loadBtnV.setStyle("-fx-background-color: #d5c6e0; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+            loadBtnV.setMaxWidth(Double.MAX_VALUE);
+
+            startBtnV = new Button("▶ Start Analysis");
+            startBtnV.setStyle("-fx-background-color: #aaa1c8; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+            startBtnV.setMaxWidth(Double.MAX_VALUE);
+
+            deleteBtnV = new Button("🗑️ Delete");
+            deleteBtnV.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+            deleteBtnV.setMaxWidth(Double.MAX_VALUE);
+
+            cancelBtnV = new Button("✕ Cancel");
+            cancelBtnV.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+            cancelBtnV.setMaxWidth(Double.MAX_VALUE);
+            cancelBtnV.setDisable(true);
+
+            loadBtnV.setOnAction(e -> loadBtn.fire());
+            startBtnV.setOnAction(e -> startBtn.fire());
+            deleteBtnV.setOnAction(e -> deleteBtn.fire());
+            cancelBtnV.setOnAction(e -> cancelBtn.fire());
+
+            setupButtonHoverEffects(loadBtnV, startBtnV, deleteBtnV);
+            cancelBtnV.setOnMouseEntered(e -> {
+                if (!cancelBtnV.isDisable()) {
+                    cancelBtnV.setStyle("-fx-background-color: #ff5252; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+                }
+            });
+            cancelBtnV.setOnMouseExited(e -> {
+                if (!cancelBtnV.isDisable()) {
+                    cancelBtnV.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
+                }
+            });
+
+            verticalButtonBox.getChildren().addAll(loadBtnV, startBtnV, deleteBtnV, cancelBtnV);
 
             // Progress bar with animation
             progressBar = new ProgressBar(0);
@@ -178,7 +215,6 @@ public class HelloApplication extends Application {
             progressBar.setStyle("-fx-accent: #967aa1; -fx-background-radius: 10;");
             HBox.setHgrow(progressBar, Priority.ALWAYS);
 
-            // Create animation
             progressAnimation = new Timeline(
                     new KeyFrame(Duration.ZERO, new KeyValue(progressBar.opacityProperty(), 0.7)),
                     new KeyFrame(Duration.seconds(0.8), new KeyValue(progressBar.opacityProperty(), 1.0)),
@@ -200,20 +236,21 @@ public class HelloApplication extends Application {
             // Create preview panel
             previewPanel = createPreviewPanel();
             previewPanel.setVisible(false);
+            previewPanel.setManaged(false);
             VBox.setVgrow(previewPanel, Priority.NEVER);
 
-            // TableView - Make it properly responsive
+            // TableView
             table = new TableView<>();
             table.setStyle("-fx-control-inner-background: white; -fx-background-color: #f5e6e8; -fx-border-color: #d5c6e0; -fx-border-radius: 10;");
             table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
             masterData = FXCollections.observableArrayList();
 
-            // Set table to expand properly
             table.setPrefHeight(300);
             table.setMinHeight(200);
             VBox.setVgrow(table, Priority.ALWAYS);
 
-            // Make table responsive
+            VBox.setMargin(table, new Insets(0, 0, 20, 0));
+
             table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
             // Columns
@@ -271,37 +308,28 @@ public class HelloApplication extends Application {
                 if (newSelection != null) {
                     loadFilePreview(newSelection);
                 } else {
-                    previewPanel.setVisible(false);
+                    hidePreviewPanel();
                 }
             });
 
-            // Results container - Make it properly responsive
+            // Results container
             resultsContainer = new VBox(15);
             resultsContainer.setPadding(new Insets(20));
             resultsContainer.setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-border-radius: 15; -fx-border-width: 2;");
             resultsContainer.setVisible(false);
+            resultsContainer.setManaged(false);
             resultsContainer.setMinHeight(400);
             VBox.setVgrow(resultsContainer, Priority.NEVER);
 
-            // Add all components to main content in proper order
+            // Add all components to main content
             mainContent.getChildren().addAll(
                     descriptionLabel,
                     searchBox,
-                    buttonGrid,
-                    previewPanel,
-                    progressBox,
+                    buttonContainer,
+                    verticalButtonBox,
                     table,
                     resultsContainer
             );
-
-            // Set VBox constraints for proper spacing
-            VBox.setMargin(descriptionLabel, new Insets(0, 0, 10, 0));
-            VBox.setMargin(searchBox, new Insets(0, 0, 20, 0));
-            VBox.setMargin(buttonGrid, new Insets(0, 0, 20, 0));
-            VBox.setMargin(previewPanel, new Insets(0, 0, 15, 0));
-            VBox.setMargin(progressBox, new Insets(0, 0, 15, 0));
-            VBox.setMargin(table, new Insets(0, 0, 20, 0));
-            VBox.setMargin(resultsContainer, new Insets(0, 0, 0, 0));
 
             // FileChooser
             FileChooser fileChooser = new FileChooser();
@@ -339,18 +367,22 @@ public class HelloApplication extends Application {
                 }
             });
 
+            loadBtnV.setOnAction(e -> loadBtn.fire());
+
             // Delete Selected
             deleteBtn.setOnAction(e -> {
                 ObservableList<FileInfo> selected = table.getSelectionModel().getSelectedItems();
                 if (!selected.isEmpty()) {
                     masterData.removeAll(selected);
                     showStatusMessage("Removed " + selected.size() + " file(s)", 1500);
-                    previewPanel.setVisible(false);
+                    hidePreviewPanel();
                 } else {
                     Alert alert = new Alert(Alert.AlertType.WARNING, "No file selected!");
                     alert.showAndWait();
                 }
             });
+
+            deleteBtnV.setOnAction(e -> deleteBtn.fire());
 
             // Start Analysis
             startBtn.setOnAction(e -> {
@@ -362,20 +394,31 @@ public class HelloApplication extends Application {
                         return;
                     }
 
+                    // Debug logging
+                    System.out.println("Starting analysis for file: " + selected.getPath());
+                    System.out.println("File exists: " + file.exists());
+                    System.out.println("File can read: " + file.canRead());
+
                     // Update status
                     selected.setStatus("analyzing");
                     table.refresh();
 
-                    // Hide previous results
+                    // Hide previous results and preview
                     resultsContainer.setVisible(false);
+                    resultsContainer.setManaged(false);
                     resultsContainer.getChildren().clear();
-                    previewPanel.setVisible(false);
+                    hidePreviewPanel();
 
                     // Disable/enable buttons
                     startBtn.setDisable(true);
+                    if (startBtnV != null) startBtnV.setDisable(true);
                     cancelBtn.setDisable(false);
+                    if (cancelBtnV != null) cancelBtnV.setDisable(false);
 
                     // Show progress with animation
+                    if (!mainContent.getChildren().contains(progressBox)) {
+                        mainContent.getChildren().add(4, progressBox);
+                    }
                     progressBox.setVisible(true);
                     progressBar.setProgress(0);
                     statusLabel.setText("Starting analysis...");
@@ -399,6 +442,7 @@ public class HelloApplication extends Application {
                                 displayResults(results);
                                 statusLabel.setText("Analysis complete!");
                                 cancelBtn.setDisable(false);
+                                if (cancelBtnV != null) cancelBtnV.setDisable(false);
                             }
                         } catch (Exception ex) {
                             selected.setStatus("error");
@@ -442,6 +486,8 @@ public class HelloApplication extends Application {
                 }
             });
 
+            startBtnV.setOnAction(e -> startBtn.fire());
+
             // Search functionality
             FilteredList<FileInfo> filteredData = new FilteredList<>(masterData, p -> true);
             searchField.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -463,55 +509,17 @@ public class HelloApplication extends Application {
             // Make layout responsive with listeners
             scene.widthProperty().addListener((obs, oldVal, newVal) -> {
                 double width = newVal.doubleValue();
-                // Adjust button grid layout for smaller screens
                 if (width < 1000) {
-                    // Stack buttons vertically on small screens
-                    buttonGrid.getChildren().clear();
-                    buttonGrid.getColumnConstraints().clear();
-
-                    // Add buttons in a vertical layout
-                    buttonGrid.add(loadBtn, 0, 0);
-                    buttonGrid.add(startBtn, 0, 1);
-                    buttonGrid.add(deleteBtn, 0, 2);
-                    buttonGrid.add(cancelBtn, 0, 3);
-
-                    // Single column layout
-                    ColumnConstraints col = new ColumnConstraints();
-                    col.setPercentWidth(100);
-                    col.setHgrow(Priority.ALWAYS);
-                    buttonGrid.getColumnConstraints().add(col);
-
-                    // Add row constraints
-                    for (int i = 0; i < 4; i++) {
-                        RowConstraints row = new RowConstraints();
-                        row.setPrefHeight(45);
-                        row.setVgrow(Priority.SOMETIMES);
-                        buttonGrid.getRowConstraints().add(row);
-                    }
+                    buttonContainer.setVisible(false);
+                    verticalButtonBox.setVisible(true);
                 } else {
-                    // Horizontal layout for larger screens
-                    buttonGrid.getChildren().clear();
-                    buttonGrid.getColumnConstraints().clear();
-                    buttonGrid.getRowConstraints().clear();
-
-                    buttonGrid.add(loadBtn, 0, 0);
-                    buttonGrid.add(startBtn, 1, 0);
-                    buttonGrid.add(deleteBtn, 2, 0);
-                    buttonGrid.add(cancelBtn, 3, 0);
-
-                    // Four equal columns
-                    for (int i = 0; i < 4; i++) {
-                        ColumnConstraints col = new ColumnConstraints();
-                        col.setPercentWidth(25);
-                        col.setHgrow(Priority.ALWAYS);
-                        buttonGrid.getColumnConstraints().add(col);
-                    }
+                    buttonContainer.setVisible(true);
+                    verticalButtonBox.setVisible(false);
                 }
             });
 
             scene.heightProperty().addListener((obs, oldVal, newVal) -> {
                 double height = newVal.doubleValue();
-                // Adjust table height based on window height
                 if (height < 700) {
                     table.setPrefHeight(200);
                 } else {
@@ -522,14 +530,12 @@ public class HelloApplication extends Application {
             // Load CSS
             loadExternalCSS(scene);
 
-            // Add custom CSS for responsive design
+            // Add custom CSS
             String customCSS = """
-                /* Responsive layout */
                 .root {
                     -fx-background-color: #f5e6e8;
                 }
                 
-                /* Responsive table */
                 .table-view {
                     -fx-font-size: 13px;
                     -fx-table-cell-border-color: transparent;
@@ -546,13 +552,12 @@ public class HelloApplication extends Application {
                     -fx-background-color: #d5c6e0;
                 }
                 
-                /* Tooltip styling */
                 .tooltip {
                     -fx-background-color: #192a51;
                     -fx-text-fill: white;
                     -fx-font-size: 12px;
                     -fx-font-weight: normal;
-                    -fx-padding: 8px 12px;
+                    -fx-padding: 8 12px;
                     -fx-background-radius: 6px;
                     -fx-border-radius: 6px;
                     -fx-border-color: #d5c6e0;
@@ -560,7 +565,6 @@ public class HelloApplication extends Application {
                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3);
                 }
                 
-                /* Button styling */
                 .button {
                     -fx-cursor: hand;
                     -fx-transition: all 0.3s;
@@ -572,7 +576,6 @@ public class HelloApplication extends Application {
                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3);
                 }
                 
-                /* Progress bar animation */
                 .progress-bar > .track {
                     -fx-background-color: #f5e6e8;
                     -fx-background-radius: 10;
@@ -586,7 +589,6 @@ public class HelloApplication extends Application {
                     -fx-padding: 2px;
                 }
                 
-                /* Scrollbar styling */
                 .scroll-pane {
                     -fx-background-color: transparent;
                 }
@@ -616,7 +618,6 @@ public class HelloApplication extends Application {
                     -fx-background-color: #6f547d;
                 }
                 
-                /* Text area styling */
                 .text-area {
                     -fx-font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
                     -fx-font-size: 13px;
@@ -627,20 +628,17 @@ public class HelloApplication extends Application {
                     -fx-border-color: #d5c6e0;
                 }
                 
-                /* Highlighted text */
                 .highlighted-word {
                     -fx-fill: #E91E63;
                     -fx-font-weight: bold;
                     -fx-underline: true;
                 }
                 
-                /* Responsive grid */
                 .grid-pane {
                     -fx-hgap: 15;
                     -fx-vgap: 10;
                 }
                 
-                /* Results container */
                 .results-container {
                     -fx-background-color: white;
                     -fx-border-color: #d5c6e0;
@@ -678,7 +676,6 @@ public class HelloApplication extends Application {
         Label previewTitle = new Label("📄 File Preview");
         previewTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
 
-        // Statistics in a responsive grid
         GridPane statsGrid = new GridPane();
         statsGrid.setHgap(20);
         statsGrid.setVgap(10);
@@ -692,7 +689,6 @@ public class HelloApplication extends Application {
         statsGrid.add(previewCharCount, 1, 0);
         statsGrid.add(previewLineCount, 2, 0);
 
-        // Make grid responsive
         for (int i = 0; i < 3; i++) {
             ColumnConstraints col = new ColumnConstraints();
             col.setPercentWidth(33.33);
@@ -700,7 +696,6 @@ public class HelloApplication extends Application {
             statsGrid.getColumnConstraints().add(col);
         }
 
-        // Content preview with highlighted words
         Label contentTitle = new Label("Content Preview (with highlighted frequent words):");
         contentTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #192a51; -fx-font-size: 14px;");
 
@@ -733,9 +728,13 @@ public class HelloApplication extends Application {
      * Load file preview with highlighted words
      */
     private void loadFilePreview(FileInfo fileInfo) {
-        previewPanel.setVisible(true);
+        if (!mainContent.getChildren().contains(previewPanel)) {
+            mainContent.getChildren().add(4, previewPanel);
+        }
 
-        // Update labels
+        previewPanel.setVisible(true);
+        previewPanel.setManaged(true);
+
         String content = fileInfo.getFileContent();
         if (content == null || content.isEmpty()) {
             try {
@@ -755,9 +754,19 @@ public class HelloApplication extends Application {
         previewCharCount.setText("Characters: " + charCount);
         previewLineCount.setText("Lines: " + lineCount);
 
-        // Show first 500 characters with highlighted frequent words
         String previewText = content.length() > 500 ? content.substring(0, 500) + "..." : content;
         updateHighlightedPreview(previewText, new ArrayList<>());
+    }
+
+    /**
+     * Hide preview panel
+     */
+    private void hidePreviewPanel() {
+        previewPanel.setVisible(false);
+        previewPanel.setManaged(false);
+        if (mainContent.getChildren().contains(previewPanel)) {
+            mainContent.getChildren().remove(previewPanel);
+        }
     }
 
     /**
@@ -774,7 +783,6 @@ public class HelloApplication extends Application {
             return;
         }
 
-        // Split text and highlight frequent words
         String[] words = text.split("(?<=\\s)|(?=\\s)");
         for (String word : words) {
             Text textNode = new Text(word);
@@ -999,12 +1007,18 @@ public class HelloApplication extends Application {
     private void hideResultsAndResetUI() {
         Platform.runLater(() -> {
             resultsContainer.setVisible(false);
+            resultsContainer.setManaged(false);
             resultsContainer.getChildren().clear();
             startBtn.setDisable(false);
+            if (startBtnV != null) startBtnV.setDisable(false);
             cancelBtn.setDisable(true);
+            if (cancelBtnV != null) cancelBtnV.setDisable(true);
             progressBar.progressProperty().unbind();
             progressBar.setVisible(false);
             progressBox.setVisible(false);
+            if (mainContent.getChildren().contains(progressBox)) {
+                mainContent.getChildren().remove(progressBox);
+            }
             stopProgressAnimation();
             statusLabel.setText("Ready to analyze");
             currentTask = null;
@@ -1018,10 +1032,15 @@ public class HelloApplication extends Application {
     private void resetUIAfterAnalysis() {
         Platform.runLater(() -> {
             startBtn.setDisable(false);
-            cancelBtn.setDisable(false);
+            if (startBtnV != null) startBtnV.setDisable(false);
+            cancelBtn.setDisable(true);
+            if (cancelBtnV != null) cancelBtnV.setDisable(true);
             progressBar.progressProperty().unbind();
             progressBar.setVisible(false);
             progressBox.setVisible(false);
+            if (mainContent.getChildren().contains(progressBox)) {
+                mainContent.getChildren().remove(progressBox);
+            }
             stopProgressAnimation();
 
             new java.util.Timer().schedule(
@@ -1060,14 +1079,21 @@ public class HelloApplication extends Application {
      * Show status message
      */
     private void showStatusMessage(String message, int duration) {
-        statusLabel.setText(message);
+        if (!mainContent.getChildren().contains(progressBox)) {
+            mainContent.getChildren().add(4, progressBox);
+        }
         progressBox.setVisible(true);
+        statusLabel.setText(message);
+
         new java.util.Timer().schedule(
                 new java.util.TimerTask() {
                     @Override
                     public void run() {
                         Platform.runLater(() -> {
                             progressBox.setVisible(false);
+                            if (mainContent.getChildren().contains(progressBox)) {
+                                mainContent.getChildren().remove(progressBox);
+                            }
                             statusLabel.setText("Ready to analyze");
                         });
                     }
@@ -1083,11 +1109,10 @@ public class HelloApplication extends Application {
         Platform.runLater(() -> {
             resultsContainer.getChildren().clear();
             resultsContainer.setVisible(true);
+            resultsContainer.setManaged(true);
 
-            // Scroll to results when they appear
             mainScrollPane.setVvalue(1.0);
 
-            // Title with close button
             Label titleLabel = new Label("📊 Analysis Results: " + results.get("fileName"));
             titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
 
@@ -1103,14 +1128,12 @@ public class HelloApplication extends Application {
 
             VBox.setMargin(titleBox, new Insets(0, 0, 20, 0));
 
-            // Create responsive grid for statistics
             GridPane statsGrid = new GridPane();
             statsGrid.setHgap(25);
             statsGrid.setVgap(15);
             statsGrid.setPadding(new Insets(20));
             statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 12; -fx-border-color: #e6d6e8; -fx-border-width: 1;");
 
-            // Make grid responsive
             for (int i = 0; i < 2; i++) {
                 ColumnConstraints col = new ColumnConstraints();
                 col.setPercentWidth(50);
@@ -1152,7 +1175,6 @@ public class HelloApplication extends Application {
 
             VBox.setMargin(statsGrid, new Insets(0, 0, 20, 0));
 
-            // Most Frequent Words Section
             Label freqTitle = new Label("🔤 Most Frequent Words:");
             freqTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
 
@@ -1166,7 +1188,6 @@ public class HelloApplication extends Application {
 
             VBox.setMargin(freqArea, new Insets(0, 0, 20, 0));
 
-            // Text preview with highlighted frequent words
             Label textPreviewTitle = new Label("📝 Text Preview (Highlighted Frequent Words):");
             textPreviewTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
 
@@ -1175,7 +1196,6 @@ public class HelloApplication extends Application {
             String content = (String) results.get("fileContent");
             String previewText = content.length() > 1000 ? content.substring(0, 1000) + "..." : content;
 
-            // Update highlighted preview with frequent words
             List<String> topWords = (List<String>) results.get("topWordsList");
             updateHighlightedPreview(previewText, topWords != null ? topWords : new ArrayList<>());
 
@@ -1191,7 +1211,6 @@ public class HelloApplication extends Application {
 
             VBox.setMargin(previewNote, new Insets(0, 0, 20, 0));
 
-            // Export buttons
             Label exportTitle = new Label("💾 Export Results:");
             exportTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
 
@@ -1245,7 +1264,6 @@ public class HelloApplication extends Application {
         val.setStyle("-fx-text-fill: #333; -fx-font-size: 14px; -fx-font-weight: bold;");
         val.setWrapText(true);
 
-        // Create tooltip
         Tooltip tooltip = new Tooltip(tooltipText);
         tooltip.setWrapText(true);
         tooltip.setMaxWidth(300);
@@ -1357,10 +1375,7 @@ public class HelloApplication extends Application {
     private String generateCsvExport(Map<String, Object> results) {
         StringBuilder content = new StringBuilder();
 
-        // CSV Header
         content.append("Metric,Value\n");
-
-        // Data rows
         content.append("File Name,").append(escapeCsv(results.get("fileName").toString())).append("\n");
         content.append("Total Words,").append(results.get("totalWords")).append("\n");
         content.append("Unique Words,").append(results.get("uniqueWords")).append("\n");
@@ -1382,7 +1397,6 @@ public class HelloApplication extends Application {
 
         content.append("File Size,").append(results.get("fileSize")).append("\n\n");
 
-        // Frequent words section
         content.append("Most Frequent Words\n");
         content.append("Word,Frequency\n");
 
@@ -1453,7 +1467,6 @@ public class HelloApplication extends Application {
         headerBox.setPadding(new Insets(15));
         headerBox.setStyle("-fx-background-color: #f5e6e8; -fx-border-color: #d5c6e0; -fx-border-width: 0 0 2 0;");
 
-        // Create logo
         ImageView logoView = new ImageView();
         try {
             URL logoUrl = getClass().getResource("/images/logo.png");
@@ -1463,19 +1476,16 @@ public class HelloApplication extends Application {
                 logoView.setFitWidth(50);
                 logoView.setPreserveRatio(true);
             } else {
-                // Create text logo as fallback
                 Text logoText = new Text("🔍");
                 logoText.setStyle("-fx-font-size: 32px;");
                 headerBox.getChildren().add(logoText);
             }
         } catch (Exception e) {
-            // Use text fallback
             Text logoText = new Text("🔍");
             logoText.setStyle("-fx-font-size: 32px;");
             headerBox.getChildren().add(logoText);
         }
 
-        // Create app name label
         VBox titleBox = new VBox(5);
         Label appNameLabel = new Label("VioletLens");
         appNameLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
