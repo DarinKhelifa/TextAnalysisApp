@@ -16,10 +16,6 @@ public class AnalysisManager {
     public AnalysisManager() {
         this.textAnalyzer = new TextAnalyzer();
     }
-
-    /**
-     * Create and configure an analysis task with better progress updates
-     */
     public Task<Map<String, Object>> createAnalysisTask(File file,
                                                         Button startBtn,
                                                         Button cancelBtn,
@@ -84,9 +80,6 @@ public class AnalysisManager {
         };
     }
 
-    /**
-     * Setup task event handlers
-     */
     public void setupTaskHandlers(Task<Map<String, Object>> task,
                                   Button startBtn,
                                   Button cancelBtn,
@@ -131,10 +124,6 @@ public class AnalysisManager {
             }
         });
     }
-
-    /**
-     * Reset UI to initial state
-     */
     private void resetUI(Button startBtn, Button cancelBtn, ProgressBar progressBar) {
         javafx.application.Platform.runLater(() -> {
             startBtn.setDisable(false);
@@ -144,9 +133,6 @@ public class AnalysisManager {
         });
     }
 
-    /**
-     * Callback interface for analysis results
-     */
     public interface AnalysisResultCallback {
         void onAnalysisComplete(Map<String, Object> results);
 
