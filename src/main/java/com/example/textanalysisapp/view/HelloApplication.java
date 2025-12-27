@@ -244,7 +244,7 @@ public class HelloApplication extends Application {
             // TableView
             table = new TableView<>();
             table.setStyle("-fx-control-inner-background: white; -fx-background-color: #f5e6e8; -fx-border-color: #d5c6e0; -fx-border-radius: 8;");
-            table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+            table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             masterData = FXCollections.observableArrayList();
 
             table.setPrefHeight(300);
@@ -526,9 +526,6 @@ public class HelloApplication extends Application {
                     table.setPrefHeight(300);
                 }
             });
-
-            // Load CSS
-            loadExternalCSS(scene);
 
             // Add custom CSS
             String customCSS = """
@@ -1065,7 +1062,7 @@ public class HelloApplication extends Application {
                 fileChooser.setInitialFileName("analysis_results_" + results.get("fileName") + ".csv");
                 break;
         }
-
+        // Save export file
         File file = fileChooser.showSaveDialog(null);
         if (file != null) {
             try {
@@ -1308,24 +1305,6 @@ public class HelloApplication extends Application {
 
         headerBox.getChildren().addAll(logoView, titleBox);
         return headerBox;
-    }
-
-    /**
-     * Load external CSS
-     */
-    private void loadExternalCSS(Scene scene) {
-        try {
-            URL cssUrl = getClass().getResource("/CSS/Style.css");
-            if (cssUrl == null) {
-                cssUrl = getClass().getClassLoader().getResource("CSS/Style.css");
-            }
-
-            if (cssUrl != null) {
-                scene.getStylesheets().add(cssUrl.toExternalForm());
-            }
-        } catch (Exception e) {
-            // Ignore CSS errors
-        }
     }
 
     public static void main(String[] args) {

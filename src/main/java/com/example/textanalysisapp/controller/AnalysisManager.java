@@ -11,17 +11,17 @@ import java.util.Map;
 
 public class AnalysisManager {
 
-    private TextAnalyzer textAnalyzer;
+    private TextAnalyzer textAnalyzer;//field that will perform the text analysis.
 
     public AnalysisManager() {
         this.textAnalyzer = new TextAnalyzer();
-    }
+    }//creates a TextAnalyzer instance and stores it.
     public Task<Map<String, Object>> createAnalysisTask(File file,
                                                         Button startBtn,
                                                         Button cancelBtn,
                                                         ProgressBar progressBar,
                                                         Label statusLabel) {
-
+    //method that builds and returns a JavaFX Task which analyzes a file and returns a results map.
         return new Task<Map<String, Object>>() {
             @Override
             protected Map<String, Object> call() throws Exception {
@@ -30,7 +30,7 @@ public class AnalysisManager {
 
                 // Update UI state
                 javafx.application.Platform.runLater(() -> {
-                    startBtn.setDisable(true);
+                    startBtn.setDisable(true);//disable the start button so user can’t start again.
                     cancelBtn.setDisable(false);
                     progressBar.setVisible(true);
                     progressBar.setProgress(0.05);
