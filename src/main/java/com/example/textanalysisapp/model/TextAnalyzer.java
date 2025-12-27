@@ -16,7 +16,7 @@ public class TextAnalyzer {
         }
 
         // Add artificial delay for realistic progress
-        try {
+       try {
             Thread.sleep(500); // 0.5 second delay to show progress
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -30,14 +30,14 @@ public class TextAnalyzer {
         // Add delay between steps
         addDelay(300);
 
-        // 2. Unique words
+        // 2. Unique words calcul
         Set<String> uniqueWords = Arrays.stream(words)
                 .map(word -> word.toLowerCase().replaceAll("[^a-zA-Z0-9]", ""))
                 .filter(word -> !word.isEmpty())
                 .collect(Collectors.toSet());
         results.put("uniqueWords", uniqueWords.size());
 
-        addDelay(300);
+        addDelay(300);// time to update progress bar
 
         // 3. Character counts
         int charsWithSpaces = content.length();

@@ -40,7 +40,7 @@ public class AnalysisResult {
 
     public SimpleIntegerProperty totalWordsProperty() {
         return totalWords;
-    }
+    }// we use it when it was relating with view items
 
     public void setTotalWords(int totalWords) {
         this.totalWords.set(totalWords);

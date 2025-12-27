@@ -6,7 +6,7 @@ import javafx.scene.control.Alert.AlertType;
 public class ErrorHandler {
 
     public static void showError(String title, Throwable e) {
-        Alert alert = new Alert(AlertType.ERROR);
+        Alert alert = new Alert(AlertType.ERROR);// error window
         alert.setTitle("Error");
         alert.setHeaderText(title);
         alert.setContentText(e.getMessage());

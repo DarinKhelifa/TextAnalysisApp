@@ -59,7 +59,7 @@ public class AnalysisResultView extends VBox {
         statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 10; -fx-border-color: #e6d6e8; -fx-border-width: 1;");
 
         // Make grid responsive
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++) {// responsivity
             ColumnConstraints col = new ColumnConstraints();
             col.setPercentWidth(50);
             col.setHgrow(Priority.ALWAYS);
