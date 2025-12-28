@@ -1,109 +1,133 @@
 package com.example.textanalysisapp.view;
 
-import com.example.textanalysisapp.model.AnalysisResult;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.geometry.Insets;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.geometry.Pos;
+import java.util.Map;
 
 public class AnalysisResultView extends VBox {
 
-    private Label titleLabel;
     private GridPane statsGrid;
-    private TextArea topWordsArea;
-    private BarChart<String, Number> frequencyChart;
+    private TextArea freqArea;
+    private TextArea previewArea;
+    private Button closeBtn;
+    private Button exportTxtBtn;
+    private Button exportCsvBtn;
+    private Button copyBtn;
 
     public AnalysisResultView() {
-        setupUI();
+        createUI();
     }
 
-    private void setupUI() {
-        setSpacing(15);
-        setPadding(new Insets(20));
-        setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-border-radius: 10;");
+    private void createUI() {
+        setSpacing(10);
+        setPadding(new Insets(15));
+        setStyle("-fx-background-color: white; -fx-border-color: #ccc; -fx-border-radius: 8;");
 
         // Title
-        titleLabel = new Label("Analysis Results");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
+        Label title = new Label("📊 Analysis Results");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        // Close button
+        closeBtn = new Button("Close");
+        closeBtn.setStyle("-fx-background-color: #999; -fx-text-fill: white; -fx-padding: 5 15;");
+
+        HBox titleRow = new HBox(title, closeBtn);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(title, Priority.ALWAYS);
 
         // Stats Grid
         statsGrid = new GridPane();
-        statsGrid.setHgap(20);
-        statsGrid.setVgap(10);
+        statsGrid.setHgap(15);
+        statsGrid.setVgap(8);
         statsGrid.setPadding(new Insets(10));
+        statsGrid.setStyle("-fx-background-color: #f5f5f5; -fx-border-radius: 6;");
 
-        // Most Frequent Words Area
-        topWordsArea = new TextArea();
-        topWordsArea.setEditable(false);
-        topWordsArea.setWrapText(true);
-        topWordsArea.setPrefHeight(100);
-        topWordsArea.setStyle("-fx-control-inner-background: #f9f7fa;");
+        // Frequent Words
+        Label freqLabel = new Label("🔤 Most Frequent Words:");
+        freqLabel.setStyle("-fx-font-weight: bold;");
 
-        // Chart
-        setupChart();
+        freqArea = new TextArea();
+        freqArea.setEditable(false);
+        freqArea.setWrapText(true);
+        freqArea.setPrefHeight(70);
+        freqArea.setStyle("-fx-background-color: white; -fx-border-color: #ddd;");
 
-        getChildren().addAll(titleLabel, statsGrid,
-                new Label("Most Frequent Words:"), topWordsArea,
-                new Label("Word Frequency:"), frequencyChart);
+        // Text Preview
+        Label previewLabel = new Label("📝 Text Preview:");
+        previewLabel.setStyle("-fx-font-weight: bold;");
+
+        previewArea = new TextArea();
+        previewArea.setEditable(false);
+        previewArea.setWrapText(true);
+        previewArea.setPrefHeight(100);
+        previewArea.setStyle("-fx-background-color: white; -fx-border-color: #ddd;");
+
+        // Export buttons
+        Label exportLabel = new Label("💾 Export Results:");
+        exportLabel.setStyle("-fx-font-weight: bold;");
+
+        exportTxtBtn = new Button("Export as TXT");
+        exportTxtBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 6 12;");
+
+        exportCsvBtn = new Button("Export as CSV");
+        exportCsvBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-padding: 6 12;");
+
+        copyBtn = new Button("Copy to Clipboard");
+        copyBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-padding: 6 12;");
+
+        HBox buttonsRow = new HBox(10, exportTxtBtn, exportCsvBtn, copyBtn);
+        buttonsRow.setAlignment(Pos.CENTER_LEFT);
+
+        getChildren().addAll(
+                titleRow,
+                statsGrid,
+                freqLabel,
+                freqArea,
+                previewLabel,
+                previewArea,
+                exportLabel,
+                buttonsRow
+        );
     }
 
-    private void setupChart() {
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
-        frequencyChart = new BarChart<>(xAxis, yAxis);
-        frequencyChart.setTitle("Top 5 Words Frequency");
-        frequencyChart.setLegendVisible(false);
-        frequencyChart.setPrefHeight(200);
-    }
-
-    public void displayResults(AnalysisResult result) {
-        titleLabel.setText("Analysis Results: " + result.getFileName());
-
-        // Clear previous stats
+    public void displayResults(Map<String, Object> results) {
         statsGrid.getChildren().clear();
 
-        // Add stats
-        addStatRow(statsGrid, 0, "Total Words:", result.getTotalWords() + "");
-        addStatRow(statsGrid, 1, "Unique Words:", result.getUniqueWords() + "");
-        addStatRow(statsGrid, 2, "Characters:", result.getCharacterCount() + "");
-        addStatRow(statsGrid, 3, "Reading Time:", result.getReadingTime() + " minutes");
-        addStatRow(statsGrid, 4, "Sentiment:", result.getSentiment());
+        // Add statistics to grid
+        addStat("Total Words:", results.get("totalWords").toString(), 0);
+        addStat("Unique Words:", results.get("uniqueWords").toString(), 1);
+        addStat("Characters (with spaces):", results.get("charsWithSpaces").toString(), 2);
+        addStat("Sentence Count:", results.get("sentenceCount").toString(), 3);
+        addStat("Reading Time:", results.get("readingTime") + " minutes", 4);
 
-        // Display top words
-        topWordsArea.setText(result.getMostFrequent());
+        // Show frequent words
+        freqArea.setText(results.get("mostFrequent").toString());
 
-        // Update chart (you'll need to parse the frequency data)
-        updateChart(result.getMostFrequent());
-    }
-
-    private void addStatRow(GridPane grid, int row, String label, String value) {
-        Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-weight: bold;");
-        Label val = new Label(value);
-
-        grid.add(lbl, 0, row);
-        grid.add(val, 1, row);
-    }
-
-    private void updateChart(String frequencyData) {
-        // Parse frequency data and update chart
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-
-        // Example: "hello (5), world (3), ..."
-        String[] items = frequencyData.split(", ");
-        for (String item : items) {
-            String[] parts = item.split(" \\(");
-            if (parts.length == 2) {
-                String word = parts[0];
-                int count = Integer.parseInt(parts[1].replace(")", ""));
-                series.getData().add(new XYChart.Data<>(word, count));
-            }
+        // Show text preview
+        String content = (String) results.get("fileContent");
+        if (content != null) {
+            String preview = content.length() > 500 ? content.substring(0, 500) + "..." : content;
+            previewArea.setText(preview);
         }
 
-        frequencyChart.getData().clear();
-        frequencyChart.getData().add(series);
+        setVisible(true);
     }
+
+    private void addStat(String label, String value, int row) {
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-font-weight: bold;");
+
+        Label val = new Label(value);
+
+        statsGrid.add(lbl, 0, row);
+        statsGrid.add(val, 1, row);
+    }
+
+    // Getters for buttons
+    public Button getCloseButton() { return closeBtn; }
+    public Button getExportTxtButton() { return exportTxtBtn; }
+    public Button getExportCsvButton() { return exportCsvBtn; }
+    public Button getCopyToClipboardButton() { return copyBtn; }
 }
