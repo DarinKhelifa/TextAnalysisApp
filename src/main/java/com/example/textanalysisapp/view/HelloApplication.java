@@ -37,7 +37,6 @@ public class HelloApplication extends Application {
 
     private ProgressBar progressBar;
     private Button cancelBtn;
-    private Button analyzeAllBtn;
     private Button analyzeSelectedBtn;
     private Label statusLabel;
     private VBox resultsContainer;
@@ -106,7 +105,7 @@ public class HelloApplication extends Application {
                         table.getSelectionModel().select(i);
                     }
                 }
-                updateAnalyzeSelectedButton();
+                updateButtonsBasedOnSelection();
             });
 
             TextField searchField = new TextField();
@@ -131,14 +130,11 @@ public class HelloApplication extends Application {
             loadBtn.setStyle("-fx-background-color: #d5c6e0; -fx-text-fill: #192a51; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
             loadBtn.setMinWidth(130);
 
-            analyzeSelectedBtn = new Button("✅ Analyze Selected (0)");
+            analyzeSelectedBtn = new Button("✅ Analyze Selected");
             analyzeSelectedBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
             analyzeSelectedBtn.setMinWidth(150);
-            analyzeSelectedBtn.setDisable(true);
-
-            analyzeAllBtn = new Button("🔀 Analyze All");
-            analyzeAllBtn.setStyle("-fx-background-color: #192a51; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
-            analyzeAllBtn.setMinWidth(130);
+            analyzeSelectedBtn.setVisible(false);
+            analyzeSelectedBtn.setManaged(false);
 
             Button deleteBtn = new Button("🗑 Delete");
             deleteBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;");
@@ -164,9 +160,6 @@ public class HelloApplication extends Application {
                 }
             });
 
-            analyzeAllBtn.setOnMouseEntered(e -> analyzeAllBtn.setStyle("-fx-background-color: #2a3a71; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);"));
-            analyzeAllBtn.setOnMouseExited(e -> analyzeAllBtn.setStyle("-fx-background-color: #192a51; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;"));
-
             deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle("-fx-background-color: #6f547d; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 3);"));
             deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25 12 25; -fx-background-radius: 8; -fx-border-radius: 8;"));
 
@@ -187,7 +180,7 @@ public class HelloApplication extends Application {
             HBox buttonContainer = new HBox(10);
             buttonContainer.setAlignment(Pos.CENTER);
             buttonContainer.setPadding(new Insets(0, 0, 20, 0));
-            buttonContainer.getChildren().addAll(loadBtn, analyzeSelectedBtn, analyzeAllBtn, deleteBtn, cancelBtn);
+            buttonContainer.getChildren().addAll(loadBtn, analyzeSelectedBtn, deleteBtn, cancelBtn);
 
             // Overall progress indicator for multi-file analysis
             overallProgressIndicator = new ProgressIndicator(0);
@@ -242,7 +235,7 @@ public class HelloApplication extends Application {
 
             // Listen to selection changes
             table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-                updateAnalyzeSelectedButton();
+                updateButtonsBasedOnSelection();
             });
 
             // Columns - Checkbox column first
@@ -261,7 +254,7 @@ public class HelloApplication extends Application {
                         } else {
                             table.getSelectionModel().clearSelection(getIndex());
                         }
-                        updateAnalyzeSelectedButton();
+                        updateButtonsBasedOnSelection();
                     });
                 }
 
@@ -422,8 +415,8 @@ public class HelloApplication extends Application {
                     table.refresh();
                     showStatusMessage("Loaded " + files.size() + " file(s) successfully", 2000);
 
-                    // تحديث زر Analyze Selected
-                    updateAnalyzeSelectedButton();
+                    // تحديث الأزرار بناءً على التحديد
+                    updateButtonsBasedOnSelection();
 
                     if (!masterData.isEmpty()) {
                         table.getSelectionModel().select(0);
@@ -446,8 +439,8 @@ public class HelloApplication extends Application {
 
                     showStatusMessage("Removed " + selected.size() + " file(s)", 1500);
 
-                    // تحديث زر Analyze Selected
-                    updateAnalyzeSelectedButton();
+                    // تحديث الأزرار بناءً على التحديد
+                    updateButtonsBasedOnSelection();
                 } else {
                     Alert alert = new Alert(Alert.AlertType.WARNING, "No file selected!");
                     alert.showAndWait();
@@ -483,7 +476,6 @@ public class HelloApplication extends Application {
 
                 // تعطيل الأزرار
                 analyzeSelectedBtn.setDisable(true);
-                analyzeAllBtn.setDisable(true);
                 cancelBtn.setDisable(false);
 
                 // تعطيل التحديد أثناء التحليل
@@ -579,132 +571,6 @@ public class HelloApplication extends Application {
                 multiAnalysisManager.analyzeFiles(filesToAnalyze, listener);
             });
 
-            // Analyze All Files
-            analyzeAllBtn.setOnAction(e -> {
-                List<FileInfo> filesToAnalyze;
-                synchronized (lock) {
-                    if (masterData.isEmpty()) {
-                        Alert alert = new Alert(Alert.AlertType.WARNING, "No files loaded to analyze!");
-                        alert.showAndWait();
-                        return;
-                    }
-                    filesToAnalyze = new ArrayList<>(masterData);
-                }
-
-                // Confirm for large number of files
-                if (filesToAnalyze.size() > 10) {
-                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirm.setTitle("Confirm Bulk Analysis");
-                    confirm.setHeaderText("You are about to analyze " + filesToAnalyze.size() + " files");
-                    confirm.setContentText("This may take some time. Do you want to continue?");
-
-                    Optional<ButtonType> result = confirm.showAndWait();
-                    if (!result.isPresent() || result.get() != ButtonType.OK) {
-                        return;
-                    }
-                }
-
-                // Hide previous results
-                resultsContainer.setVisible(false);
-
-                // Disable buttons
-                analyzeSelectedBtn.setDisable(true);
-                analyzeAllBtn.setDisable(true);
-                cancelBtn.setDisable(false);
-
-                // Disable selection during analysis
-                selectAllCheckBox.setDisable(true);
-                table.setDisable(true);
-
-                // Set multi-analysis mode
-                isMultiAnalysisMode = true;
-
-                // Show overall progress
-                overallProgressBox.setVisible(true);
-                overallProgressBox.setManaged(true);
-                overallProgressIndicator.setProgress(0);
-                overallProgressLabel.setText("Preparing to analyze " + filesToAnalyze.size() + " files...");
-
-                // Hide individual progress
-                progressBox.setVisible(false);
-
-                // Clear previous results for files being analyzed
-                for (FileInfo fileInfo : filesToAnalyze) {
-                    allResults.remove(fileInfo.getName());
-                }
-
-                // Update all file statuses
-                for (FileInfo fileInfo : filesToAnalyze) {
-                    fileInfo.setStatus("Analyzing");
-                }
-                table.refresh();
-
-                // Create listener for progress updates
-                MultiThreadedAnalysisManager.AnalysisProgressListener listener =
-                        new MultiThreadedAnalysisManager.AnalysisProgressListener() {
-                            @Override
-                            public void onProgressUpdate(double overallProgress, int completedFiles, int totalFiles) {
-                                Platform.runLater(() -> {
-                                    overallProgressIndicator.setProgress(overallProgress);
-                                    overallProgressLabel.setText(
-                                            String.format("Processing: %d/%d files (%.0f%%)",
-                                                    completedFiles, totalFiles, overallProgress * 100)
-                                    );
-                                });
-                            }
-
-                            @Override
-                            public void onFileComplete(String fileName, Map<String, Object> results) {
-                                Platform.runLater(() -> {
-                                    // Store results
-                                    allResults.put(fileName, results);
-
-                                    // Update table status
-                                    for (FileInfo fileInfo : masterData) {
-                                        if (fileInfo.getName().equals(fileName)) {
-                                            fileInfo.setStatus("Completed");
-                                            break;
-                                        }
-                                    }
-                                    table.refresh();
-                                });
-                            }
-
-                            @Override
-                            public void onFileError(String fileName, String errorMessage) {
-                                Platform.runLater(() -> {
-                                    // Update file status
-                                    for (FileInfo fileInfo : masterData) {
-                                        if (fileInfo.getName().equals(fileName)) {
-                                            fileInfo.setStatus("Error");
-                                            break;
-                                        }
-                                    }
-                                    table.refresh();
-                                });
-                            }
-
-                            @Override
-                            public void onAnalysisComplete(Map<String, AnalysisResult> analysisResults) {
-                                Platform.runLater(() -> {
-                                    resetUIAfterAnalysis();
-                                    overallProgressBox.setVisible(false);
-                                    overallProgressBox.setManaged(false);
-
-                                    // Enable selection again
-                                    selectAllCheckBox.setDisable(false);
-                                    table.setDisable(false);
-
-                                    // Show summary
-                                    showAnalysisSummary();
-                                });
-                            }
-                        };
-
-                // Start multi-threaded analysis
-                multiAnalysisManager.analyzeFiles(filesToAnalyze, listener);
-            });
-
             // Search functionality
             FilteredList<FileInfo> filteredData = new FilteredList<>(masterData, p -> true);
             searchField.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -775,12 +641,22 @@ public class HelloApplication extends Application {
     }
 
     /**
-     * Update Analyze Selected button text
+     * Update buttons based on selection count
      */
-    private void updateAnalyzeSelectedButton() {
+    private void updateButtonsBasedOnSelection() {
         int selectedCount = table.getSelectionModel().getSelectedItems().size();
-        analyzeSelectedBtn.setText("✅ Analyze Selected (" + selectedCount + ")");
-        analyzeSelectedBtn.setDisable(selectedCount == 0);
+
+        if (selectedCount == 0) {
+            // No selection - hide Analyze Selected button
+            analyzeSelectedBtn.setVisible(false);
+            analyzeSelectedBtn.setManaged(false);
+        } else {
+            // One or more files selected - show Analyze Selected button with count
+            analyzeSelectedBtn.setText("✅ Analyze Selected (" + selectedCount + ")");
+            analyzeSelectedBtn.setVisible(true);
+            analyzeSelectedBtn.setManaged(true);
+            analyzeSelectedBtn.setDisable(false);
+        }
     }
 
     /**
@@ -1091,7 +967,6 @@ public class HelloApplication extends Application {
     private void resetUIAfterAnalysis() {
         Platform.runLater(() -> {
             analyzeSelectedBtn.setDisable(false);
-            analyzeAllBtn.setDisable(false);
             cancelBtn.setDisable(true);
 
             selectAllCheckBox.setDisable(false);
@@ -1109,7 +984,7 @@ public class HelloApplication extends Application {
 
             statusLabel.setText("Ready to analyze");
 
-            updateAnalyzeSelectedButton();
+            updateButtonsBasedOnSelection();
         });
     }
 
