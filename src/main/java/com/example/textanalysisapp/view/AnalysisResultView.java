@@ -3,251 +3,131 @@ package com.example.textanalysisapp.view;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.geometry.Insets;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
 import javafx.geometry.Pos;
-import javafx.application.Platform;
 import java.util.Map;
 
 public class AnalysisResultView extends VBox {
 
-    private Label titleLabel;
     private GridPane statsGrid;
     private TextArea freqArea;
-    private TextArea resultsPreviewArea;
-    private BarChart<String, Number> frequencyChart;
-    private HBox titleBox;
-    private VBox exportButtonsBox;
-    private HBox exportButtonsContainer;
-
-    // Export buttons
+    private TextArea previewArea;
+    private Button closeBtn;
     private Button exportTxtBtn;
     private Button exportCsvBtn;
-    private Button copyToClipboardBtn;
-    private Button closeResultsBtn;
+    private Button copyBtn;
 
     public AnalysisResultView() {
-        setupUI();
+        createUI();
     }
 
-    private void setupUI() {
-        setSpacing(12);
+    private void createUI() {
+        setSpacing(10);
         setPadding(new Insets(15));
-        setStyle("-fx-background-color: white; -fx-border-color: #d5c6e0; -fx-border-radius: 12; -fx-border-width: 2;");
+        setStyle("-fx-background-color: white; -fx-border-color: #ccc; -fx-border-radius: 8;");
 
-        // Title with close button
-        titleLabel = new Label("📊 Analysis Results");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #192a51;");
+        // Title
+        Label title = new Label("📊 Analysis Results");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        closeResultsBtn = new Button("✕ Close");
-        closeResultsBtn.setStyle("-fx-background-color: #967aa1; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 15 6 15; -fx-background-radius: 6;");
-        closeResultsBtn.setTooltip(new Tooltip("Close results panel"));
+        // Close button
+        closeBtn = new Button("Close");
+        closeBtn.setStyle("-fx-background-color: #999; -fx-text-fill: white; -fx-padding: 5 15;");
 
-        titleBox = new HBox(titleLabel, closeResultsBtn);
-        titleBox.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(titleLabel, Priority.ALWAYS);
-        closeResultsBtn.setAlignment(Pos.CENTER_RIGHT);
-
-        VBox.setMargin(titleBox, new Insets(0, 0, 15, 0));
+        HBox titleRow = new HBox(title, closeBtn);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(title, Priority.ALWAYS);
 
         // Stats Grid
         statsGrid = new GridPane();
-        statsGrid.setHgap(20);
-        statsGrid.setVgap(10);
-        statsGrid.setPadding(new Insets(15));
-        statsGrid.setStyle("-fx-background-color: #f9f7fa; -fx-border-radius: 10; -fx-border-color: #e6d6e8; -fx-border-width: 1;");
+        statsGrid.setHgap(15);
+        statsGrid.setVgap(8);
+        statsGrid.setPadding(new Insets(10));
+        statsGrid.setStyle("-fx-background-color: #f5f5f5; -fx-border-radius: 6;");
 
-        // Make grid responsive
-        for (int i = 0; i < 2; i++) {// responsivity
-            ColumnConstraints col = new ColumnConstraints();
-            col.setPercentWidth(50);
-            col.setHgrow(Priority.ALWAYS);
-            statsGrid.getColumnConstraints().add(col);
-        }
-
-        VBox.setMargin(statsGrid, new Insets(0, 0, 15, 0));
-
-        // Most Frequent Words Section
-        Label freqTitle = new Label("🔤 Most Frequent Words:");
-        freqTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
-
-        VBox.setMargin(freqTitle, new Insets(0, 0, 8, 0));
+        // Frequent Words
+        Label freqLabel = new Label("🔤 Most Frequent Words:");
+        freqLabel.setStyle("-fx-font-weight: bold;");
 
         freqArea = new TextArea();
         freqArea.setEditable(false);
         freqArea.setWrapText(true);
-        freqArea.setPrefHeight(80);
-        freqArea.setStyle("-fx-control-inner-background: white; -fx-border-color: #d5c6e0; -fx-border-radius: 6; -fx-font-family: 'Consolas', monospace; -fx-font-size: 11px;");
+        freqArea.setPrefHeight(70);
+        freqArea.setStyle("-fx-background-color: white; -fx-border-color: #ddd;");
 
-        VBox.setMargin(freqArea, new Insets(0, 0, 15, 0));
+        // Text Preview
+        Label previewLabel = new Label("📝 Text Preview:");
+        previewLabel.setStyle("-fx-font-weight: bold;");
 
-        // Text preview
-        Label textPreviewTitle = new Label("📝 Text Preview:");
-        textPreviewTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
-
-        VBox.setMargin(textPreviewTitle, new Insets(0, 0, 8, 0));
-
-        resultsPreviewArea = new TextArea();
-        resultsPreviewArea.setEditable(false);
-        resultsPreviewArea.setWrapText(true);
-        resultsPreviewArea.setStyle("-fx-control-inner-background: #f9f7fa; -fx-border-color: #d5c6e0; -fx-border-radius: 6; -fx-font-family: 'Consolas', monospace; -fx-font-size: 11px;");
-        resultsPreviewArea.setPrefHeight(120);
-
-        VBox.setMargin(resultsPreviewArea, new Insets(0, 0, 8, 0));
-
-        Label previewNote = new Label("Note: First 800 characters shown");
-        previewNote.setStyle("-fx-text-fill: #666; -fx-font-size: 11px; -fx-font-style: italic;");
-
-        VBox.setMargin(previewNote, new Insets(0, 0, 15, 0));
+        previewArea = new TextArea();
+        previewArea.setEditable(false);
+        previewArea.setWrapText(true);
+        previewArea.setPrefHeight(100);
+        previewArea.setStyle("-fx-background-color: white; -fx-border-color: #ddd;");
 
         // Export buttons
-        Label exportTitle = new Label("💾 Export Results:");
-        exportTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #192a51;");
+        Label exportLabel = new Label("💾 Export Results:");
+        exportLabel.setStyle("-fx-font-weight: bold;");
 
-        VBox.setMargin(exportTitle, new Insets(0, 0, 8, 0));
+        exportTxtBtn = new Button("Export as TXT");
+        exportTxtBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 6 12;");
 
-        exportButtonsBox = new VBox(8);
-        exportButtonsContainer = new HBox(10);
-        exportButtonsContainer.setAlignment(Pos.CENTER_LEFT);
+        exportCsvBtn = new Button("Export as CSV");
+        exportCsvBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-padding: 6 12;");
 
-        exportTxtBtn = new Button("📄 Export as TXT");
-        exportTxtBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15; -fx-background-radius: 6; -fx-font-size: 11px;");
-        exportTxtBtn.setTooltip(new Tooltip("Export results as plain text file"));
+        copyBtn = new Button("Copy to Clipboard");
+        copyBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-padding: 6 12;");
 
-        exportCsvBtn = new Button("📊 Export as CSV");
-        exportCsvBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15; -fx-background-radius: 6; -fx-font-size: 11px;");
-        exportCsvBtn.setTooltip(new Tooltip("Export results as CSV file (compatible with Excel)"));
-
-        copyToClipboardBtn = new Button("📋 Copy to Clipboard");
-        copyToClipboardBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15; -fx-background-radius: 6; -fx-font-size: 11px;");
-        copyToClipboardBtn.setTooltip(new Tooltip("Copy results to clipboard for pasting elsewhere"));
-
-        exportButtonsContainer.getChildren().addAll(exportTxtBtn, exportCsvBtn, copyToClipboardBtn);
-        exportButtonsBox.getChildren().add(exportButtonsContainer);
-
-        VBox.setMargin(exportButtonsBox, new Insets(0, 0, 8, 0));
-
-        // Chart (optional - hidden by default)
-        setupChart();
+        HBox buttonsRow = new HBox(10, exportTxtBtn, exportCsvBtn, copyBtn);
+        buttonsRow.setAlignment(Pos.CENTER_LEFT);
 
         getChildren().addAll(
-                titleBox,
+                titleRow,
                 statsGrid,
-                freqTitle,
+                freqLabel,
                 freqArea,
-                textPreviewTitle,
-                resultsPreviewArea,
-                previewNote,
-                exportTitle,
-                exportButtonsBox
+                previewLabel,
+                previewArea,
+                exportLabel,
+                buttonsRow
         );
-
-        // Initially hide the chart
-        if (frequencyChart != null) {
-            frequencyChart.setVisible(false);
-        }
-    }
-
-    private void setupChart() {
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
-        frequencyChart = new BarChart<>(xAxis, yAxis);
-        frequencyChart.setTitle("Top 5 Words Frequency");
-        frequencyChart.setLegendVisible(false);
-        frequencyChart.setPrefHeight(200);
-        frequencyChart.setVisible(false); // Hide by default
     }
 
     public void displayResults(Map<String, Object> results) {
-        Platform.runLater(() -> {
-            // Clear previous stats
-            statsGrid.getChildren().clear();
+        statsGrid.getChildren().clear();
 
-            // Update title
-            titleLabel.setText("📊 Analysis Results: " + results.get("fileName"));
+        // Add statistics to grid
+        addStat("Total Words:", results.get("totalWords").toString(), 0);
+        addStat("Unique Words:", results.get("uniqueWords").toString(), 1);
+        addStat("Characters (with spaces):", results.get("charsWithSpaces").toString(), 2);
+        addStat("Sentence Count:", results.get("sentenceCount").toString(), 3);
+        addStat("Reading Time:", results.get("readingTime") + " minutes", 4);
 
-            // Add stats rows
-            int row = 0;
-            addStatRow(statsGrid, row++, "Total Words:", results.get("totalWords").toString(),
-                    "Total number of words in the document");
-            addStatRow(statsGrid, row++, "Unique Words:", results.get("uniqueWords").toString(),
-                    "Number of distinct words (excluding duplicates)");
-            addStatRow(statsGrid, row++, "Characters (with spaces):", results.get("charsWithSpaces").toString(),
-                    "Total characters including spaces");
-            addStatRow(statsGrid, row++, "Characters (no spaces):", results.get("charsWithoutSpaces").toString(),
-                    "Total characters excluding spaces");
-            addStatRow(statsGrid, row++, "Sentences:", results.get("sentenceCount").toString(),
-                    "Number of sentences (separated by . ! ?)");
+        // Show frequent words
+        freqArea.setText(results.get("mostFrequent").toString());
 
-            if (results.containsKey("paragraphCount")) {
-                addStatRow(statsGrid, row++, "Paragraphs:", results.get("paragraphCount").toString(),
-                        "Number of paragraphs (separated by blank lines)");
-            }
+        // Show text preview
+        String content = (String) results.get("fileContent");
+        if (content != null) {
+            String preview = content.length() > 500 ? content.substring(0, 500) + "..." : content;
+            previewArea.setText(preview);
+        }
 
-            addStatRow(statsGrid, row++, "Reading Time:", results.get("readingTime") + " minutes",
-                    "Estimated reading time at 200 words per minute");
-            addStatRow(statsGrid, row++, "Sentiment:", results.get("sentiment").toString(),
-                    "Overall emotional tone of the text");
-            addStatRow(statsGrid, row++, "Avg. Word Length:", results.get("avgWordLength").toString(),
-                    "Average number of characters per word");
-
-            if (results.containsKey("longestWord")) {
-                addStatRow(statsGrid, row++, "Longest Word:", results.get("longestWord").toString(),
-                        "The longest word found in the text");
-            }
-
-            addStatRow(statsGrid, row++, "File Size:", results.get("fileSize").toString(),
-                    "Size of the file on disk");
-
-            // Display most frequent words
-            freqArea.setText(results.get("mostFrequent").toString());
-
-            // Display text preview
-            String content = (String) results.get("fileContent");
-            String previewText = content.length() > 800 ? content.substring(0, 800) + "..." : content;
-            resultsPreviewArea.setText(previewText);
-
-            // Make the view visible
-            setVisible(true);
-            setManaged(true);
-        });
+        setVisible(true);
     }
 
-    private void addStatRow(GridPane grid, int row, String label, String value, String tooltipText) {
+    private void addStat(String label, String value, int row) {
         Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #192a51; -fx-font-size: 12px;");
-        lbl.setWrapText(true);
+        lbl.setStyle("-fx-font-weight: bold;");
 
         Label val = new Label(value);
-        val.setStyle("-fx-text-fill: #333; -fx-font-size: 12px; -fx-font-weight: bold;");
-        val.setWrapText(true);
 
-        // Create tooltip
-        Tooltip tooltip = new Tooltip(tooltipText);
-        tooltip.setWrapText(true);
-        tooltip.setMaxWidth(250);
-        Tooltip.install(lbl, tooltip);
-        Tooltip.install(val, tooltip);
-
-        grid.add(lbl, 0, row);
-        grid.add(val, 1, row);
+        statsGrid.add(lbl, 0, row);
+        statsGrid.add(val, 1, row);
     }
 
-    // Getter methods for buttons
-    public Button getCloseButton() {
-        return closeResultsBtn;
-    }
-
-    public Button getExportTxtButton() {
-        return exportTxtBtn;
-    }
-
-    public Button getExportCsvButton() {
-        return exportCsvBtn;
-    }
-
-    public Button getCopyToClipboardButton() {
-        return copyToClipboardBtn;
-    }
+    // Getters for buttons
+    public Button getCloseButton() { return closeBtn; }
+    public Button getExportTxtButton() { return exportTxtBtn; }
+    public Button getExportCsvButton() { return exportCsvBtn; }
+    public Button getCopyToClipboardButton() { return copyBtn; }
 }

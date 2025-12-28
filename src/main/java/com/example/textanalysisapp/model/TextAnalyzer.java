@@ -1,12 +1,11 @@
 package com.example.textanalysisapp.model;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TextAnalyzer {
 
     /**
-     * Main analysis method - pure business logic
+     * Main analysis method
      */
     public Map<String, Object> analyzeText(String content) {
         Map<String, Object> results = new HashMap<>();
@@ -15,50 +14,37 @@ public class TextAnalyzer {
             return getEmptyResults();
         }
 
-        // Add artificial delay for realistic progress
-       try {
-            Thread.sleep(500); // 0.5 second delay to show progress
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        // 1. Basic statistics
+        // 1. Split text into words (delay 300ms)
+        try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         String[] words = content.split("\\s+");
         int totalWords = words.length;
         results.put("totalWords", totalWords);
 
-        // Add delay between steps
-        addDelay(300);
-
-        // 2. Unique words calcul
-        Set<String> uniqueWords = Arrays.stream(words)
-                .map(word -> word.toLowerCase().replaceAll("[^a-zA-Z0-9]", ""))
-                .filter(word -> !word.isEmpty())
-                .collect(Collectors.toSet());
+        // 2. Count unique words (delay 300ms)
+        try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        Set<String> uniqueWords = new HashSet<>();
+        for (String word : words) {
+            String cleanWord = word.toLowerCase().replaceAll("[^a-z]", "");
+            if (!cleanWord.isEmpty()) {
+                uniqueWords.add(cleanWord);
+            }
+        }
         results.put("uniqueWords", uniqueWords.size());
 
-        addDelay(300);// time to update progress bar
-
-        // 3. Character counts
+        // 3. Count characters (delay 200ms)
+        try { Thread.sleep(200); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         int charsWithSpaces = content.length();
         int charsWithoutSpaces = content.replace(" ", "").length();
         results.put("charsWithSpaces", charsWithSpaces);
         results.put("charsWithoutSpaces", charsWithoutSpaces);
 
-        addDelay(300);
-
-        // 4. Most frequent words
+        // 4. Most frequent words (delay 400ms)
+        try { Thread.sleep(400); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         Map<String, Integer> wordFrequency = calculateWordFrequency(words);
-        String topWords = getTopWords(wordFrequency, 10);
+        String topWords = getTopWords(wordFrequency, 5);
         results.put("mostFrequent", topWords);
 
-        // Store top words for highlighting
-        List<String> topWordsList = getTopWordsList(wordFrequency, 10);
-        results.put("topWordsList", topWordsList);
-
-        addDelay(300);
-
-        // 5. Reading time
+        // 5. Estimated reading time
         double readingTime = totalWords / 200.0;
         results.put("readingTime", String.format("%.1f", readingTime));
 
@@ -66,32 +52,7 @@ public class TextAnalyzer {
         int sentenceCount = content.split("[.!?]+").length;
         results.put("sentenceCount", sentenceCount);
 
-        // 7. Average word length
-        double avgWordLength = totalWords > 0 ?
-                (double) charsWithoutSpaces / totalWords : 0;
-        results.put("avgWordLength", String.format("%.2f", avgWordLength));
-
-        // 8. Sentiment
-        String sentiment = analyzeSentiment(content);
-        results.put("sentiment", sentiment);
-
-        // 9. Paragraph count
-        int paragraphCount = content.split("\\n\\s*\\n").length;
-        results.put("paragraphCount", paragraphCount);
-
-        // 10. Longest word
-        String longestWord = findLongestWord(words);
-        results.put("longestWord", longestWord);
-
         return results;
-    }
-
-    private void addDelay(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     /**
@@ -100,8 +61,8 @@ public class TextAnalyzer {
     private Map<String, Integer> calculateWordFrequency(String[] words) {
         Map<String, Integer> frequency = new HashMap<>();
         for (String word : words) {
-            String cleanWord = word.toLowerCase().replaceAll("[^a-zA-Z0-9]", "");
-            if (!cleanWord.isEmpty() && cleanWord.length() > 1) {
+            String cleanWord = word.toLowerCase().replaceAll("[^a-z]", "");
+            if (!cleanWord.isEmpty()) {
                 frequency.put(cleanWord, frequency.getOrDefault(cleanWord, 0) + 1);
             }
         }
@@ -109,66 +70,30 @@ public class TextAnalyzer {
     }
 
     /**
-     * Get top N frequent words as string
+     * Get top N frequent words
      */
     private String getTopWords(Map<String, Integer> frequency, int limit) {
-        return frequency.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                .limit(limit)
-                .map(e -> e.getKey() + " (" + e.getValue() + ")")
-                .collect(Collectors.joining(", "));
-    }
+        StringBuilder result = new StringBuilder();
 
-    /**
-     * Get top N frequent words as list
-     */
-    private List<String> getTopWordsList(Map<String, Integer> frequency, int limit) {
-        return frequency.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                .limit(limit)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-    }
+        // Convert map to list for sorting
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(frequency.entrySet());
 
-    /**
-     * Basic sentiment analysis
-     */
-    private String analyzeSentiment(String text) {
-        String[] positiveWords = {"good", "great", "excellent", "happy", "love", "best", "nice", "awesome", "positive", "wonderful", "perfect", "amazing"};
-        String[] negativeWords = {"bad", "terrible", "awful", "sad", "hate", "worst", "poor", "horrible", "negative", "dislike", "angry", "upset"};
+        // Sort descending by frequency
+        list.sort((a, b) -> b.getValue().compareTo(a.getValue()));
 
-        text = text.toLowerCase();
-        int positiveCount = 0;
-        int negativeCount = 0;
-
-        for (String word : positiveWords) {
-            if (text.contains(word)) positiveCount++;
-        }
-        for (String word : negativeWords) {
-            if (text.contains(word)) negativeCount++;
+        // Take first (limit) elements
+        int count = 0;
+        for (Map.Entry<String, Integer> entry : list) {
+            if (count >= limit) break;
+            result.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+            count++;
         }
 
-        if (positiveCount > negativeCount) return "Positive (" + positiveCount + " positive, " + negativeCount + " negative)";
-        if (negativeCount > positiveCount) return "Negative (" + positiveCount + " positive, " + negativeCount + " negative)";
-        return "Neutral (" + positiveCount + " positive, " + negativeCount + " negative)";
+        return result.toString();
     }
 
     /**
-     * Find longest word
-     */
-    private String findLongestWord(String[] words) {
-        String longest = "";
-        for (String word : words) {
-            String cleanWord = word.replaceAll("[^a-zA-Z0-9]", "");
-            if (cleanWord.length() > longest.length()) {
-                longest = cleanWord;
-            }
-        }
-        return longest + " (" + longest.length() + " characters)";
-    }
-
-    /**
-     * Return empty results for empty content
+     * Empty results for empty content
      */
     private Map<String, Object> getEmptyResults() {
         Map<String, Object> results = new HashMap<>();
@@ -179,11 +104,6 @@ public class TextAnalyzer {
         results.put("mostFrequent", "No words found");
         results.put("readingTime", "0.0");
         results.put("sentenceCount", 0);
-        results.put("avgWordLength", "0.00");
-        results.put("sentiment", "Neutral");
-        results.put("paragraphCount", 0);
-        results.put("longestWord", "None");
-        results.put("topWordsList", new ArrayList<String>());
         return results;
     }
 }
